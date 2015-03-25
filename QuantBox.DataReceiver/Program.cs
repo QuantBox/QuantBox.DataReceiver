@@ -25,43 +25,26 @@ namespace DataReceiver
         public const string KEY_DataPath = "DataPath";
         public const string KEY_ConfigPath = "ConfigPath";
 
-        public const string KEY_TradeConnectionConfigFileName = "TradeConnectionConfigFileName";
-        public const string KEY_TradeInstrumentInfoListFileName = "TradeInstrumentInfoListFileName";
-
-        public const string KEY_MarketDataConnectionConfigListFileName = "MarketDataConnectionConfigListFileName";
-        public const string KEY_MarketDataInstrumentInfoListFileName = "MarketDataInstrumentInfoListFileName";
-        public const string KEY_MarketDataIncludeFilterListFileName = "MarketDataIncludeFilterListFileName";
-        public const string KEY_MarketDataExcludeFilterListFileName = "MarketDataExcludeFilterListFileName";
+        public const string KEY_ConnectionConfigListFileName = "ConnectionConfigListFileName";
+        public const string KEY_InstrumentInfoListFileName = "InstrumentInfoListFileName";
+        public const string KEY_IncludeFilterListFileName = "IncludeFilterListFileName";
+        public const string KEY_ExcludeFilterListFileName = "ExcludeFilterListFileName";
 
         static void Main(string[] args)
         {
-            GetInstruments GetInstruments = new GetInstruments();
-            GetInstruments.ConfigPath = ConfigurationManager.AppSettings[KEY_ConfigPath];
-            GetInstruments.ConnectionConfigFileName = ConfigurationManager.AppSettings[KEY_TradeConnectionConfigFileName];
-            GetInstruments.InstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_TradeInstrumentInfoListFileName];
-            GetInstruments.Load();
-            GetInstruments.Connect();
-            GetInstruments.WaitConnectd();
-            GetInstruments.ReqQryInstrument();
-            GetInstruments.WaitIsLast();
-            Console.WriteLine("一共查询到{0}条合约", GetInstruments.InstrumentInfoList.Count);
-            GetInstruments.Save();
-            Console.WriteLine("写入合约列表到{0}", GetInstruments.InstrumentInfoListFileName);
-            GetInstruments.Disconnect();
+            DRTickWriter TickWriter = new DRTickWriter(ConfigurationManager.AppSettings[KEY_DataPath]);
 
-
-            // 如何得到交易日？需要登录
             DataReceiver dataReceiver = new DataReceiver();
-            dataReceiver.TickWriter = new DRTickWriter(ConfigurationManager.AppSettings[KEY_DataPath]);
+            dataReceiver.TickWriter = TickWriter;
 
             dataReceiver.ConfigPath = ConfigurationManager.AppSettings[KEY_ConfigPath];
-            dataReceiver.ConnectionConfigListFileName = ConfigurationManager.AppSettings[KEY_MarketDataConnectionConfigListFileName];
-            dataReceiver.InstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_MarketDataInstrumentInfoListFileName];
-            dataReceiver.IncludeFilterListFileName = ConfigurationManager.AppSettings[KEY_MarketDataIncludeFilterListFileName];
-            dataReceiver.ExcludeFilterListFileName = ConfigurationManager.AppSettings[KEY_MarketDataExcludeFilterListFileName];
+            dataReceiver.ConnectionConfigListFileName = ConfigurationManager.AppSettings[KEY_ConnectionConfigListFileName];
+            dataReceiver.InstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_InstrumentInfoListFileName];
+            dataReceiver.IncludeFilterListFileName = ConfigurationManager.AppSettings[KEY_IncludeFilterListFileName];
+            dataReceiver.ExcludeFilterListFileName = ConfigurationManager.AppSettings[KEY_ExcludeFilterListFileName];
             
             dataReceiver.Load();
-            Console.WriteLine("一共读取到{0}条合约", dataReceiver.InstrumentInfoList.Count);
+            Console.WriteLine("一共读取到 {0} 条合约", dataReceiver.InstrumentInfoList.Count);
             dataReceiver.Connect();
             dataReceiver.WaitConnectd();
 

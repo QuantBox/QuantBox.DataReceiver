@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuantBox.DataReceiver", "QuantBox.DataReceiver\QuantBox.DataReceiver.csproj", "{9E58B4E4-342B-483A-BB7F-F89A52EF7CBF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetInstruments", "GetInstruments\GetInstruments.csproj", "{7D847C1F-C052-47ED-AA52-3827ECEF29B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{9E58B4E4-342B-483A-BB7F-F89A52EF7CBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E58B4E4-342B-483A-BB7F-F89A52EF7CBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E58B4E4-342B-483A-BB7F-F89A52EF7CBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D847C1F-C052-47ED-AA52-3827ECEF29B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D847C1F-C052-47ED-AA52-3827ECEF29B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D847C1F-C052-47ED-AA52-3827ECEF29B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D847C1F-C052-47ED-AA52-3827ECEF29B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

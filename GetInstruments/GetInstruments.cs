@@ -1,24 +1,22 @@
-﻿using Newtonsoft.Json;
+﻿using DataReceiver;
 using QuantBox;
 using QuantBox.XAPI;
 using QuantBox.XAPI.Callback;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace DataReceiver
+namespace GetInstruments
 {
     /// <summary>
     /// 登录得到最新的合约列表
     /// </summary>
-    public class GetInstruments:ApiBase
+    public class GetInstruments : ApiBase
     {
         public string ConnectionConfigFileName = @"ConnectionConfig.json";
-        
+
         public ConnectionConfig ConnectionConfig;
 
         public void Save()
@@ -63,7 +61,7 @@ namespace DataReceiver
 
             foreach (var api in XApiList)
             {
-                api.ReqQryInstrument("","");
+                api.ReqQryInstrument("", "");
             }
         }
 
