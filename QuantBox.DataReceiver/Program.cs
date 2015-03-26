@@ -20,7 +20,7 @@ namespace DataReceiver
     /// 自动订阅行情，订阅成功后，自动保存行情
     /// 订阅时需要进行一下区分，比如说
     /// </summary>
-    static class Program
+    class Program
     {
         public const string KEY_DataPath = "DataPath";
         public const string KEY_ConfigPath = "ConfigPath";
@@ -42,79 +42,30 @@ namespace DataReceiver
             dataReceiver.InstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_InstrumentInfoListFileName];
             dataReceiver.IncludeFilterListFileName = ConfigurationManager.AppSettings[KEY_IncludeFilterListFileName];
             dataReceiver.ExcludeFilterListFileName = ConfigurationManager.AppSettings[KEY_ExcludeFilterListFileName];
-            
-            dataReceiver.Load();
-            Console.WriteLine("一共读取到 {0} 条合约", dataReceiver.InstrumentInfoList.Count);
+
+            dataReceiver.LoadConnectionConfig();
             dataReceiver.Connect();
-            dataReceiver.WaitConnectd();
+            // 由于会建立多个，所以超时时间可以长一些
+            if (dataReceiver.WaitConnectd(20 * 1000))
+            {
+                dataReceiver.WatcherStrat(dataReceiver.ConfigPath, "");
+                // 复制老列表
+                dataReceiver.ProcessConfig(null);
+            }
 
-            dataReceiver.Subscribe();
-
+            Console.WriteLine("开始接收，按Ctrl+Q退出");
             do
             {
                 ConsoleKeyInfo cki = Console.ReadKey();
-                if (cki.Key == ConsoleKey.Q)
+                if (cki.Key == ConsoleKey.Q && cki.Modifiers == ConsoleModifiers.Control)
                     break;
             }while(true);
-            
 
+
+            dataReceiver.WatcherStop();
             dataReceiver.Disconnect();
 
             return;
         }
     }
 }
-/*
- List<InstrumentFilterConfig> list = new List<InstrumentFilterConfig>();
-            list.Add(new InstrumentFilterConfig() { SymbolRegex = @"IF\d{4}$", Time_ssf_Diff = 5});
-            list.Add(new InstrumentFilterConfig() { SymbolRegex = @"IO\d{4}-", Time_ssf_Diff = 5});
-            list.Add(new InstrumentFilterConfig() { SymbolRegex = @"SR\d{3}$", Time_ssf_Diff = 10});
-            list.Add(new InstrumentFilterConfig() { SymbolRegex = @"WR\d{3}[CP]", Time_ssf_Diff = 10});
-            list.Add(new InstrumentFilterConfig() { SymbolRegex = @"\d{8}.S", Time_ssf_Diff = 10 });
-
-            List<string> c = new List<string>();
-            c.Add("IF1503");
-            c.Add("IF1504");
-            c.Add("IO1503-C-2500");
-            c.Add("SR509");
-            c.Add("SR509C2500");
-            c.Add("10000000.SSE");
-            Regex regex = new Regex(@"\d{8}.SSE");
-            foreach(var c1 in c)
-            {
-                Console.WriteLine(regex.Match(c1).Success);
-            }
-
-            Save(@"D:\", "abc.json", list);
-
-            List<ConnectionConfig> list2 = new List<ConnectionConfig>();
-            ConnectionConfig cc1 = new ConnectionConfig() { LibPath = @"C:\Program Files\SmartQuant Ltd\OpenQuant 2014\XAPI\CTP\x86\QuantBox_CTP_Quote.dll",SessionLimit = 2, SubscribePerSession = 200 };
-            cc1.Server.BrokerID = "1017";
-            cc1.Server.Address = "tcp://ctpmn1-front1.citicsf.com:51213";
-            cc1.User.UserID = "00000015";
-            cc1.User.Password = "123456";
-            list2.Add(cc1);
-
-            Save(@"D:\", "abcd.json", list2);
-
-            List<XApi> b = new List<XApi>();
-
-            // 查看有多少种连接
-            foreach(var a in list2)
-            {
-                // 建立多个连接
-                for (int i = 0; i < a.SessionLimit;++i)
-                {
-                    XApi api = new XApi(a.LibPath);
-                    api.Server = a.Server;
-                    api.User = a.User;
-
-                    api.OnConnectionStatus = OnConnectionStatus;
-                    api.OnRtnDepthMarketData = OnRtnDepthMarketData;
-
-                    api.Connect();
-
-                    b.Add(api);
-                }
-            }
- */

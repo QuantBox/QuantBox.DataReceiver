@@ -28,6 +28,76 @@ namespace DataReceiver
 
         public ActionBlock<DepthMarketDataField> Input;
 
+        #region 配置文件重新加载
+        private Dictionary<string, FileSystemWatcher> watchers = new Dictionary<string, FileSystemWatcher>();
+        public void WatcherStrat(string path, string filter)
+        {
+            string key = Path.Combine(path, filter);
+            FileSystemWatcher watcher;
+            if (!watchers.TryGetValue(key, out watcher))
+            {
+                watcher = new FileSystemWatcher();
+                watcher.Path = path;
+                watcher.Filter = filter;
+                watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+                watcher.Changed += new FileSystemEventHandler(OnReload);
+                watcher.Deleted += new FileSystemEventHandler(OnReload);
+                watcher.EnableRaisingEvents = true;
+            }
+            watchers[key] = watcher;
+        }
+
+        public void WatcherStop()
+        {
+            foreach (var watcher in watchers.Values)
+            {
+                watcher.Changed -= new FileSystemEventHandler(OnReload);
+                watcher.Deleted -= new FileSystemEventHandler(OnReload);
+                watcher.EnableRaisingEvents = false;
+            }
+            watchers.Clear();
+        }
+
+        /// <summary>
+        /// 文件改变事件
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
+        private void OnReload(object source, FileSystemEventArgs e)
+        {
+            Console.WriteLine("文件变动{0},{1}", e.ChangeType, e.FullPath);
+            if (e.ChangeType == WatcherChangeTypes.Changed)
+            {
+                ProcessConfig(e.FullPath);
+            }
+            else if (e.ChangeType == WatcherChangeTypes.Deleted)
+            {
+                //CreateConfig(e.FullPath);
+            }
+        }
+
+        /// <summary>
+        /// 如果加载失败就生成
+        /// </summary>
+        /// <param name="fullPath"></param>
+        public void ProcessConfig(string fullPath)
+        {
+            List<InstrumentInfo> oldList = new List<InstrumentInfo>(InstrumentInfoList);
+
+            LoadInstrumentInfoList();
+            // 得到要订阅的表，是否覆盖原表？
+            List<InstrumentInfo> newList = Filter(InstrumentInfoList);
+            InstrumentInfoList = newList;
+
+            IEnumerable<InstrumentInfo> _old = oldList.Where(x => newList.FindAll(y => y.Symbol == x.Symbol).Count == 0);
+            Unsubscribe(_old);
+            IEnumerable<InstrumentInfo> _new = newList.Where(x => oldList.FindAll(y => y.Symbol == x.Symbol).Count == 0);
+            Subscribe(_new);
+
+            Console.WriteLine("取消订阅{0},订阅{1}", _old.Count(), _new.Count());
+        }
+        #endregion
+
         public DataReceiver()
         {
             Input = new ActionBlock<DepthMarketDataField>((x) => OnInputMarketData(x));
@@ -41,21 +111,27 @@ namespace DataReceiver
             Save(ConfigPath, ExcludeFilterListFileName, ExcludeFilterList);
         }
 
-        public void Load()
+        public void LoadConnectionConfig()
         {
             ConnectionConfigList = new List<ConnectionConfig>();
+
+            ConnectionConfigList = (List<ConnectionConfig>)Load(ConfigPath, ConnectionConfigListFileName, ConnectionConfigList);
+
+            if (ConnectionConfigList == null)
+                ConnectionConfigList = new List<ConnectionConfig>();
+        }
+
+        public void LoadInstrumentInfoList()
+        {
             InstrumentInfoList = new List<InstrumentInfo>();
             IncludeFilterList = new List<InstrumentFilterConfig>();
             ExcludeFilterList = new List<InstrumentFilterConfig>();
 
-            ConnectionConfigList = (List<ConnectionConfig>)Load(ConfigPath, ConnectionConfigListFileName, ConnectionConfigList);
             InstrumentInfoList = (List<InstrumentInfo>)Load(ConfigPath, InstrumentInfoListFileName, InstrumentInfoList);
             IncludeFilterList = (List<InstrumentFilterConfig>)Load(ConfigPath, IncludeFilterListFileName, IncludeFilterList);
             ExcludeFilterList = (List<InstrumentFilterConfig>)Load(ConfigPath, ExcludeFilterListFileName, ExcludeFilterList);
 
-            if (ConnectionConfigList == null)
-                ConnectionConfigList = new List<ConnectionConfig>();
-            if(InstrumentInfoList == null)
+            if (InstrumentInfoList == null)
                 InstrumentInfoList = new List<InstrumentInfo>();
             if (IncludeFilterList == null)
                 IncludeFilterList = new List<InstrumentFilterConfig>();
@@ -98,56 +174,84 @@ namespace DataReceiver
             return false;
         }
 
-        public void Subscribe()
+        public List<InstrumentInfo> Filter(List<InstrumentInfo> list)
         {
-            // 如何处理程序正在跑，但修改了配置文件，有新加合约时
+            List<InstrumentInfo> newList = new List<InstrumentInfo>();
 
-            // 遍历合约列表
-            foreach (var i in InstrumentInfoList)
+            foreach (var i in list)
             {
                 // 查看是否需要订阅
                 InstrumentFilterConfig match1 = Match(i.Symbol, IncludeFilterList);
-                
-                if(match1 != null)
+
+                if (match1 != null)
                 {
                     i.Time_ssf_Diff = match1.Time_ssf_Diff;
                     // 包含，需要订阅
 
                     InstrumentFilterConfig match2 = Match(i.Symbol, ExcludeFilterList);
-                    if(match2 == null)
+                    if (match2 == null)
                     {
-                        // 不包含，没有被排除，需要订阅
-                        TickWriter.AddInstrument(string.Format("{0}.{1}",i.Instrument,i.Exchange), i.TickSize, i.Factor, i.Time_ssf_Diff);
-                        TickWriter.AddInstrument(string.Format("{0}.", i.Instrument), i.TickSize, i.Factor, i.Time_ssf_Diff);
-                        TickWriter.AddInstrument(string.Format("{0}", i.Instrument), i.TickSize, i.Factor, i.Time_ssf_Diff);
-
-                        if (Contains(i.Instrument, i.Exchange))
-                        {
-                            Console.WriteLine("已经订阅了{0}.{1}", i.Instrument, i.Exchange);
-                        }
-                        else
-                        {
-                            // 得到API,直接订阅
-                            foreach (var api in XApiList)
-                            {
-                                if (api.SubscribedInstrumentsCount < api.MaxSubscribedInstrumentsCount)
-                                {
-                                    api.Subscribe(i.Instrument, i.Exchange);
-                                    break;
-                                }
-                            }
-                        }
+                        newList.Add(i);
+                        //Console.WriteLine("合约{0}匹配于{1}排除列表", i.Symbol, ExcludeFilterListFileName);
                     }
                     else
                     {
-                        Console.WriteLine("合约{0}匹配于{1}排除列表", i.Symbol, ExcludeFilterListFileName);
+                        //Console.WriteLine("合约{0}匹配于{1}排除列表", i.Symbol, ExcludeFilterListFileName);
                     }
                 }
                 else
                 {
-                    Console.WriteLine("合约{0}不匹配于{1}包含列表", i.Symbol, IncludeFilterListFileName);
+                    //Console.WriteLine("合约{0}不匹配于{1}包含列表", i.Symbol, IncludeFilterListFileName);
                 }
             }
+
+            return newList;
+        }
+
+        /// <summary>
+        /// 订阅
+        /// </summary>
+        /// <param name="list"></param>
+        public void Subscribe(IEnumerable<InstrumentInfo> list)
+        {
+            foreach (var i in list)
+            {
+                // 不包含，没有被排除，需要订阅
+                TickWriter.AddInstrument(string.Format("{0}.{1}", i.Instrument, i.Exchange), i.TickSize, i.Factor, i.Time_ssf_Diff);
+                TickWriter.AddInstrument(string.Format("{0}.", i.Instrument), i.TickSize, i.Factor, i.Time_ssf_Diff);
+                //TickWriter.AddInstrument(string.Format("{0}", i.Instrument), i.TickSize, i.Factor, i.Time_ssf_Diff);
+
+                foreach (var api in XApiList)
+                {
+                    if (api.SubscribedInstrumentsCount < api.MaxSubscribedInstrumentsCount)
+                    {
+                        api.Subscribe(i.Instrument, i.Exchange);
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 取消订阅
+        /// </summary>
+        /// <param name="list"></param>
+        public void Unsubscribe(IEnumerable<InstrumentInfo> list)
+        {
+            foreach(var i in list)
+            {
+                TickWriter.RemoveInstrument(string.Format("{0}.{1}", i.Instrument, i.Exchange));
+                TickWriter.RemoveInstrument(string.Format("{0}.", i.Instrument));
+                //TickWriter.RemoveInstrument(string.Format("{0}", i.Instrument));
+
+                foreach (var api in XApiList)
+                {
+                    if (api.SubscribedInstrumentsContains(i.Instrument, i.Exchange))
+                    {
+                        api.Unsubscribe(i.Instrument, i.Exchange);
+                    }
+                }
+            }            
         }
 
         private InstrumentFilterConfig Match(string symbol, List<InstrumentFilterConfig> list)

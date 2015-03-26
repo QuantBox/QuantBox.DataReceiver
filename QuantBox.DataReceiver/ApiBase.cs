@@ -14,7 +14,7 @@ namespace DataReceiver
     {
         public string ConfigPath;
         public string InstrumentInfoListFileName = @"InstrumentInfoList.json";
-        public List<InstrumentInfo> InstrumentInfoList;
+        public List<InstrumentInfo> InstrumentInfoList = new List<InstrumentInfo>();
 
         protected bool bIsLast;
 
@@ -62,8 +62,16 @@ namespace DataReceiver
             }
         }
 
-        public void WaitConnectd()
+        /// <summary>
+        /// 超时退出返回false
+        /// 正常退出返回true
+        /// </summary>
+        /// <param name="timeout"></param>
+        /// <returns></returns>
+        public bool WaitConnectd(int timeout)
         {
+            DateTime dt = DateTime.Now;
+            
             do
             {
                 bool IsConnected = true;
@@ -75,15 +83,37 @@ namespace DataReceiver
                         break;
                     }
                 }
-                if (!IsConnected)
-                    Thread.Sleep(1000);
-            } while (false);
+
+                if (IsConnected)
+                    return true;
+
+                // 超时退出
+                if ((DateTime.Now - dt).TotalMilliseconds >= timeout)
+                {
+                    return false;
+                }
+                Thread.Sleep(1000);
+            } while (true);
         }
 
-        public void WaitIsLast()
+        /// <summary>
+        /// 超时退出返回false
+        /// 正常退出返回true
+        /// </summary>
+        /// <param name="timeout"></param>
+        /// <returns></returns>
+        public bool WaitIsLast(int timeout)
         {
+            DateTime dt = DateTime.Now;
             while (!bIsLast)
+            {
+                if ((DateTime.Now - dt).TotalMilliseconds >= timeout)
+                {
+                    return false;
+                }
                 Thread.Sleep(1000);
+            }
+            return true;
         }
     }
 }

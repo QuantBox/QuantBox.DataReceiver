@@ -72,14 +72,18 @@ namespace GetInstruments
 
         private void OnRspQryInstrument(object sender, ref InstrumentField instrument, int size1, bool bIsLast)
         {
-            InstrumentInfoList.Add(new InstrumentInfo()
+            if (size1 > 0)
             {
-                Symbol = instrument.Symbol,
-                Instrument = instrument.InstrumentID,
-                Exchange = instrument.ExchangeID,
-                TickSize = instrument.PriceTick,
-                Factor = instrument.VolumeMultiple
-            });
+                InstrumentInfoList.Add(new InstrumentInfo()
+                {
+                    Symbol = instrument.Symbol,
+                    Instrument = instrument.InstrumentID,
+                    Exchange = instrument.ExchangeID,
+                    TickSize = instrument.PriceTick,
+                    Factor = instrument.VolumeMultiple
+                });
+            }
+
             this.bIsLast = bIsLast;
         }
     }
