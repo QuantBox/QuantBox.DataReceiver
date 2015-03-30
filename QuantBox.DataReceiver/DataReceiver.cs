@@ -221,13 +221,21 @@ namespace DataReceiver
                 TickWriter.AddInstrument(string.Format("{0}.", i.Instrument), i.TickSize, i.Factor, i.Time_ssf_Diff);
                 //TickWriter.AddInstrument(string.Format("{0}", i.Instrument), i.TickSize, i.Factor, i.Time_ssf_Diff);
 
+                bool bSubscribe = false;
+
                 foreach (var api in XApiList)
                 {
                     if (api.SubscribedInstrumentsCount < api.MaxSubscribedInstrumentsCount)
                     {
                         api.Subscribe(i.Instrument, i.Exchange);
+                        bSubscribe = true;
                         break;
                     }
+                }
+
+                if(!bSubscribe)
+                {
+                    Console.WriteLine("超过每个连接数可订数量，{0}.{1}", i.Instrument, i.Exchange);
                 }
             }
         }
@@ -251,7 +259,7 @@ namespace DataReceiver
                         api.Unsubscribe(i.Instrument, i.Exchange);
                     }
                 }
-            }            
+            }
         }
 
         private InstrumentFilterConfig Match(string symbol, List<InstrumentFilterConfig> list)
