@@ -25,6 +25,7 @@ namespace DataReceiver
         public string ConnectionConfigListFileName = @"ConnectionConfigList.json";
         public string IncludeFilterListFileName = @"IncludeFilterList.json";
         public string ExcludeFilterListFileName = @"ExcludeFilterList.json";
+        public string SaveAsInstrumentInfoListName = @"SaveAsInstrumentInfoListName";
 
         public ActionBlock<DepthMarketDataField> Input;
 
@@ -89,12 +90,16 @@ namespace DataReceiver
             List<InstrumentInfo> newList = Filter(InstrumentInfoList);
             InstrumentInfoList = newList;
 
-            IEnumerable<InstrumentInfo> _old = oldList.Where(x => newList.FindAll(y => y.Symbol == x.Symbol).Count == 0);
+            IEnumerable<InstrumentInfo> _old = oldList.Except(newList);
             Unsubscribe(_old);
-            IEnumerable<InstrumentInfo> _new = newList.Where(x => oldList.FindAll(y => y.Symbol == x.Symbol).Count == 0);
+            IEnumerable<InstrumentInfo> _new = newList.Except(oldList);
             Subscribe(_new);
 
-            Console.WriteLine("取消订阅{0},订阅{1}", _old.Count(), _new.Count());
+            IEnumerable<InstrumentInfo> _have = oldList.Intersect(newList);
+
+            Console.WriteLine("取消订阅{0},尝试订阅{1},已经订阅{2}", _old.Count(), _new.Count(), _have.Count());
+
+            SaveAsInstrumentInfoList();
         }
         #endregion
 
@@ -109,6 +114,14 @@ namespace DataReceiver
             Save(ConfigPath, InstrumentInfoListFileName, InstrumentInfoList);
             Save(ConfigPath, IncludeFilterListFileName, IncludeFilterList);
             Save(ConfigPath, ExcludeFilterListFileName, ExcludeFilterList);
+        }
+
+        /// <summary>
+        /// 这里保存的是过滤后的合约列表，也就是正在订阅的合约列表,保存在其它地方可供用户下载或检测
+        /// </summary>
+        public void SaveAsInstrumentInfoList()
+        {
+            Save(ConfigPath, SaveAsInstrumentInfoListName, InstrumentInfoList);
         }
 
         public void LoadConnectionConfig()

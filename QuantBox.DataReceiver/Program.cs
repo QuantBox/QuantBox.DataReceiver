@@ -29,6 +29,7 @@ namespace DataReceiver
         public const string KEY_InstrumentInfoListFileName = "InstrumentInfoListFileName";
         public const string KEY_IncludeFilterListFileName = "IncludeFilterListFileName";
         public const string KEY_ExcludeFilterListFileName = "ExcludeFilterListFileName";
+        public const string KEY_SaveAsInstrumentInfoListName = @"SaveAsInstrumentInfoListName";
 
         static void Main(string[] args)
         {
@@ -42,13 +43,16 @@ namespace DataReceiver
             dataReceiver.InstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_InstrumentInfoListFileName];
             dataReceiver.IncludeFilterListFileName = ConfigurationManager.AppSettings[KEY_IncludeFilterListFileName];
             dataReceiver.ExcludeFilterListFileName = ConfigurationManager.AppSettings[KEY_ExcludeFilterListFileName];
+            dataReceiver.SaveAsInstrumentInfoListName = Path.Combine(
+                ConfigurationManager.AppSettings[KEY_DataPath],
+                ConfigurationManager.AppSettings[KEY_SaveAsInstrumentInfoListName]);
 
             dataReceiver.LoadConnectionConfig();
             dataReceiver.Connect();
             // 由于会建立多个，所以超时时间可以长一些
             if (dataReceiver.WaitConnectd(20 * 1000))
             {
-                dataReceiver.WatcherStrat(dataReceiver.ConfigPath, "");
+                dataReceiver.WatcherStrat(dataReceiver.ConfigPath, "*.json");
                 // 复制老列表
                 dataReceiver.ProcessConfig(null);
             }
@@ -57,6 +61,7 @@ namespace DataReceiver
             do
             {
                 ConsoleKeyInfo cki = Console.ReadKey();
+                Console.WriteLine(cki);
                 if (cki.Key == ConsoleKey.Q && cki.Modifiers == ConsoleModifiers.Control)
                     break;
             }while(true);

@@ -47,6 +47,20 @@ namespace DataReceiver
         public double Factor;
         [JsonIgnore]
         public int Time_ssf_Diff;
+
+        public override bool Equals(object obj)
+        {
+            if (obj is InstrumentInfo)
+                return this.GetHashCode().Equals(((InstrumentInfo)obj).GetHashCode());
+            else return false;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashID = Instrument.GetHashCode();
+            int hashValue = Exchange.GetHashCode();
+            return hashID ^ hashValue;
+        }
     }
 
     /// <summary>

@@ -74,35 +74,6 @@ namespace DataReceiver
 
             do
             {
-                //if (pDepthMarketData.BidVolume5 != 0)
-                //{
-                //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.BidPrice5), pDepthMarketData.BidVolume5, 0));
-                //}
-
-                //if (pDepthMarketData.BidVolume4 != 0)
-                //{
-                //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.BidPrice4), pDepthMarketData.BidVolume4, 0));
-                //}
-
-                //if (pDepthMarketData.BidVolume3 != 0)
-                //{
-                //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.BidPrice3), pDepthMarketData.BidVolume3, 0));
-                //}
-
-                //if (pDepthMarketData.BidVolume2 != 0)
-                //{
-                //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.BidPrice2), pDepthMarketData.BidVolume2, 0));
-                //}
-
-                //if (pDepthMarketData.BidVolume1 != 0)
-                //{
-                //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.BidPrice1), pDepthMarketData.BidVolume1, 0));
-                    
-                //    // 先记录一个假的，防止只有买价没有卖价的情况
-                //    codec.SetAskPrice1(tick, pDepthMarketData.BidPrice1);
-                //    tick.AskPrice1 += 1;
-                //}
-
                 if (pDepthMarketData.AskVolume1 == 0)
                     break;
                 tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice1), pDepthMarketData.AskVolume1, 0));
