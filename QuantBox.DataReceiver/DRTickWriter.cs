@@ -15,6 +15,7 @@ namespace DataReceiver
 
         }
         
+        // 目前先不处理港股的tickSize变化的那种行情
         PbTick CreateTick(ref DepthMarketDataField pDepthMarketData, PbTickCodec codec)
         {
             var tick = new PbTick();
@@ -42,6 +43,7 @@ namespace DataReceiver
             codec.SetTurnover(tick, pDepthMarketData.Turnover);//一定要设置合约乘数才能最优保存
             codec.SetAveragePrice(tick, pDepthMarketData.AveragePrice);
             codec.SetLastPrice(tick, pDepthMarketData.LastPrice);
+            codec.SetSettlementPrice(tick, pDepthMarketData.SettlementPrice);
 
             do
             {

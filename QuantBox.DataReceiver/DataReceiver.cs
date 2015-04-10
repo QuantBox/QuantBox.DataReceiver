@@ -90,12 +90,17 @@ namespace DataReceiver
             List<InstrumentInfo> newList = Filter(InstrumentInfoList);
             InstrumentInfoList = newList;
 
+            IEnumerable<InstrumentInfo> _have = newList.Intersect(oldList);
+            // 对于已经订阅的，有可能合约最小变动价位变化，所以可能需要重新更新
+            foreach(var h in _have)
+            {
+                AddInstrument(h);
+            }
+
             IEnumerable<InstrumentInfo> _old = oldList.Except(newList);
             Unsubscribe(_old);
             IEnumerable<InstrumentInfo> _new = newList.Except(oldList);
             Subscribe(_new);
-
-            IEnumerable<InstrumentInfo> _have = oldList.Intersect(newList);
 
             Console.WriteLine("取消订阅{0},尝试订阅{1},已经订阅{2}", _old.Count(), _new.Count(), _have.Count());
 
@@ -221,6 +226,20 @@ namespace DataReceiver
             return newList;
         }
 
+        public void AddInstrument(InstrumentInfo i)
+        {
+            TickWriter.AddInstrument(string.Format("{0}.{1}", i.Instrument, i.Exchange), i.TickSize, i.Factor, i.Time_ssf_Diff);
+            TickWriter.AddInstrument(string.Format("{0}.", i.Instrument), i.TickSize, i.Factor, i.Time_ssf_Diff);
+            //TickWriter.AddInstrument(string.Format("{0}", i.Instrument), i.TickSize, i.Factor, i.Time_ssf_Diff);
+        }
+
+        public void RemoveInstrument(InstrumentInfo i)
+        {
+            TickWriter.RemoveInstrument(string.Format("{0}.{1}", i.Instrument, i.Exchange));
+            TickWriter.RemoveInstrument(string.Format("{0}.", i.Instrument));
+            //TickWriter.RemoveInstrument(string.Format("{0}", i.Instrument));
+        }
+
         /// <summary>
         /// 订阅
         /// </summary>
@@ -230,9 +249,7 @@ namespace DataReceiver
             foreach (var i in list)
             {
                 // 不包含，没有被排除，需要订阅
-                TickWriter.AddInstrument(string.Format("{0}.{1}", i.Instrument, i.Exchange), i.TickSize, i.Factor, i.Time_ssf_Diff);
-                TickWriter.AddInstrument(string.Format("{0}.", i.Instrument), i.TickSize, i.Factor, i.Time_ssf_Diff);
-                //TickWriter.AddInstrument(string.Format("{0}", i.Instrument), i.TickSize, i.Factor, i.Time_ssf_Diff);
+                AddInstrument(i);
 
                 bool bSubscribe = false;
 
@@ -261,9 +278,7 @@ namespace DataReceiver
         {
             foreach(var i in list)
             {
-                TickWriter.RemoveInstrument(string.Format("{0}.{1}", i.Instrument, i.Exchange));
-                TickWriter.RemoveInstrument(string.Format("{0}.", i.Instrument));
-                //TickWriter.RemoveInstrument(string.Format("{0}", i.Instrument));
+                RemoveInstrument(i);
 
                 foreach (var api in XApiList)
                 {
