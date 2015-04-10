@@ -30,10 +30,13 @@ namespace DataReceiver
 
         protected void Save(string path, string file, object obj)
         {
-            using (TextWriter writer = new StreamWriter(Path.Combine(path, file)))
+            using (FileStream fs = File.Open(Path.Combine(path, file), FileMode.Create, FileAccess.Write, FileShare.Read))
             {
-                writer.Write("{0}", JsonConvert.SerializeObject(obj, obj.GetType(), jSetting));
-                writer.Close();
+                using (TextWriter writer = new StreamWriter(fs))
+                {
+                    writer.Write("{0}", JsonConvert.SerializeObject(obj, obj.GetType(), jSetting));
+                    writer.Close();
+                }
             }
         }
         protected object Load(string path, string file, object obj)
@@ -41,11 +44,15 @@ namespace DataReceiver
             try
             {
                 object ret;
-                using (TextReader reader = new StreamReader(Path.Combine(path, file)))
+                using (FileStream fs = File.Open(Path.Combine(path, file), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    ret = JsonConvert.DeserializeObject(reader.ReadToEnd(), obj.GetType());
-                    reader.Close();
+                    using (TextReader reader = new StreamReader(fs))
+                    {
+                        ret = JsonConvert.DeserializeObject(reader.ReadToEnd(), obj.GetType());
+                        reader.Close();
+                    }
                 }
+                
                 return ret;
             }
             catch
