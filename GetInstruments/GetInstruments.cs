@@ -21,7 +21,8 @@ namespace GetInstruments
 
         public void Save()
         {
-            Save(ConfigPath, ConnectionConfigFileName, ConnectionConfig);
+            // 连接信息没有必要重新保存
+            //Save(ConfigPath, ConnectionConfigFileName, ConnectionConfig);
             Save(ConfigPath, InstrumentInfoListFileName, InstrumentInfoList);
         }
 

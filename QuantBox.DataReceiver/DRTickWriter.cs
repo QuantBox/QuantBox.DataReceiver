@@ -27,6 +27,10 @@ namespace DataReceiver
             tick.Time_HHmm = pDepthMarketData.UpdateTime / 100;
             tick.Time_____ssf__ = pDepthMarketData.UpdateTime % 100 * 10 + pDepthMarketData.UpdateMillisec / 100;
             tick.Time________ff = pDepthMarketData.UpdateMillisec % 100;
+            // 数据接收器时计算本地与交易所的行情时间差
+            // 1.这个地方是否保存？
+            // 2.到底是XAPI中提供还是由接收器提供？
+            //tick.LocalTime_Msec = (int)(DateTime.Now - codec.GetActionDayDateTime(tick)).TotalMilliseconds;
 
             codec.SetSymbol(tick, pDepthMarketData.Symbol);
             codec.SetExchange(tick, pDepthMarketData.ExchangeID);
