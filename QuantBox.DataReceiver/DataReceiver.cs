@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using NLog;
 using QuantBox;
 using QuantBox.XAPI;
 using QuantBox.XAPI.Callback;
@@ -28,6 +29,7 @@ namespace DataReceiver
         public string SaveAsInstrumentInfoListName = @"SaveAsInstrumentInfoListName";
 
         public ActionBlock<DepthMarketDataField> Input;
+        private Logger Log = LogManager.GetCurrentClassLogger();
 
         #region 配置文件重新加载
         private Dictionary<string, FileSystemWatcher> watchers = new Dictionary<string, FileSystemWatcher>();
@@ -66,7 +68,7 @@ namespace DataReceiver
         /// <param name="e"></param>
         private void OnReload(object source, FileSystemEventArgs e)
         {
-            Console.WriteLine("文件变动{0},{1}", e.ChangeType, e.FullPath);
+            Log.Info("文件变动{0},{1}", e.ChangeType, e.FullPath);
             if (e.ChangeType == WatcherChangeTypes.Changed)
             {
                 ProcessConfig(e.FullPath);
@@ -100,9 +102,9 @@ namespace DataReceiver
             IEnumerable<InstrumentInfo> _old = oldList.Except(newList);
             Unsubscribe(_old);
             IEnumerable<InstrumentInfo> _new = newList.Except(oldList);
-            Subscribe(_new);
+            int f = Subscribe(_new);
 
-            Console.WriteLine("取消订阅{0},尝试订阅{1},已经订阅{2}", _old.Count(), _new.Count(), _have.Count());
+            Log.Info("取消订阅:{0},尝试订阅:{1},已经订阅:{2},订阅失败:{3}", _old.Count(), _new.Count(), _have.Count(), f);
 
             SaveAsInstrumentInfoList();
         }
@@ -160,14 +162,18 @@ namespace DataReceiver
         public void Connect()
         {
             // 查看有多少种连接
+            int j = 0;
             foreach (var cc in ConnectionConfigList)
             {
+                
                 // 建立多个连接
                 for (int i = 0; i < cc.SessionLimit; ++i)
                 {
                     XApi api = new XApi(cc.LibPath);
                     api.Server = cc.Server;
                     api.User = cc.User;
+                    api.Log = LogManager.GetLogger(string.Format("{0}.{1}.{2}.{3}", api.Server.BrokerID, api.User.UserID, j, i));
+            
                     api.MaxSubscribedInstrumentsCount = cc.SubscribePerSession;
 
                     api.OnConnectionStatus = OnConnectionStatus;
@@ -177,6 +183,7 @@ namespace DataReceiver
 
                     XApiList.Add(api);
                 }
+                ++j;
             }
         }
 
@@ -244,8 +251,9 @@ namespace DataReceiver
         /// 订阅
         /// </summary>
         /// <param name="list"></param>
-        public void Subscribe(IEnumerable<InstrumentInfo> list)
+        public int Subscribe(IEnumerable<InstrumentInfo> list)
         {
+            int x = 0;
             foreach (var i in list)
             {
                 // 不包含，没有被排除，需要订阅
@@ -258,6 +266,7 @@ namespace DataReceiver
                     if (api.SubscribedInstrumentsCount < api.MaxSubscribedInstrumentsCount)
                     {
                         api.Subscribe(i.Instrument, i.Exchange);
+                        api.Log.Debug("尝试订阅:{0}.{1}", i.Instrument, i.Exchange);
                         bSubscribe = true;
                         break;
                     }
@@ -265,9 +274,11 @@ namespace DataReceiver
 
                 if(!bSubscribe)
                 {
-                    Console.WriteLine("超过每个连接数可订数量，{0}.{1}", i.Instrument, i.Exchange);
+                    Log.Info("超过每个连接数可订数量，{0}.{1}", i.Instrument, i.Exchange);
+                    ++x;
                 }
             }
+            return x;
         }
 
         /// <summary>
@@ -285,6 +296,7 @@ namespace DataReceiver
                     if (api.SubscribedInstrumentsContains(i.Instrument, i.Exchange))
                     {
                         api.Unsubscribe(i.Instrument, i.Exchange);
+                        api.Log.Debug("取消订阅:{0}.{1}", i.Instrument, i.Exchange);
                     }
                 }
             }
@@ -301,11 +313,6 @@ namespace DataReceiver
                 }
             }
             return null;
-        }
-
-        private void OnConnectionStatus(object sender, ConnectionStatus status, ref RspUserLoginField userLogin, int size1)
-        {
-            Console.WriteLine("登录状态：" + status + userLogin.ErrorMsg());
         }
 
         private void OnRtnDepthMarketData(object sender, ref DepthMarketDataField marketData)

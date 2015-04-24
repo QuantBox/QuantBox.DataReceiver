@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -22,6 +23,8 @@ namespace GetInstruments
 
         static void Main(string[] args)
         {
+            Logger Log = LogManager.GetCurrentClassLogger();
+
             GetInstruments GetInstruments = new GetInstruments();
             GetInstruments.ConfigPath = ConfigurationManager.AppSettings[KEY_ConfigPath];
             GetInstruments.ConnectionConfigFileName = ConfigurationManager.AppSettings[KEY_ConnectionConfigFileName];
@@ -30,7 +33,7 @@ namespace GetInstruments
             GetInstruments.Connect();
             if(!GetInstruments.WaitConnectd(10*1000))
             {
-                Console.WriteLine("连接超时退出");
+                Log.Info("连接超时退出");
                 GetInstruments.Disconnect();
                 return;
             }
@@ -38,16 +41,16 @@ namespace GetInstruments
             // 这个超时是否过短？因为在LTS模拟中可能要5分钟
             if(GetInstruments.WaitIsLast(60*1000))
             {
-                Console.WriteLine("一共查询到 {0} 条合约", GetInstruments.InstrumentInfoList.Count);
+                Log.Info("一共查询到 {0} 条合约", GetInstruments.InstrumentInfoList.Count);
                 if(GetInstruments.InstrumentInfoList.Count>0)
                 {
                     GetInstruments.Save();
-                    Console.WriteLine("写入合约列表到 {0}", GetInstruments.InstrumentInfoListFileName);
+                    Log.Info("另存合约列表到 {0}", GetInstruments.InstrumentInfoListFileName);
                 }
             }
             else
             {
-                Console.WriteLine("查询合约超时");
+                Log.Info("查询合约超时");
             }
             
             GetInstruments.Disconnect();

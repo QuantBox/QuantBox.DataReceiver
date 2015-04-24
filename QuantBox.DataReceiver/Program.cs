@@ -12,6 +12,7 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using System.Configuration;
+using NLog;
 
 namespace DataReceiver
 {
@@ -58,6 +59,7 @@ namespace DataReceiver
             }
 
             Console.WriteLine("开始接收，按Ctrl+Q退出");
+
             do
             {
                 ConsoleKeyInfo cki = Console.ReadKey();

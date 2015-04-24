@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using QuantBox;
+using QuantBox.XAPI;
 using QuantBox.XAPI.Callback;
 using System;
 using System.Collections.Generic;
@@ -15,7 +17,7 @@ namespace DataReceiver
         public string ConfigPath;
         public string InstrumentInfoListFileName = @"InstrumentInfoList.json";
         public List<InstrumentInfo> InstrumentInfoList = new List<InstrumentInfo>();
-
+        
         protected bool bIsLast;
 
         public List<XApi> XApiList = new List<XApi>();
@@ -121,6 +123,25 @@ namespace DataReceiver
                 Thread.Sleep(1000);
             }
             return true;
+        }
+
+        protected void OnConnectionStatus(object sender, ConnectionStatus status, ref RspUserLoginField userLogin, int size1)
+        {
+            if (size1 > 0)
+            {
+                if (userLogin.ErrorID != 0)
+                {
+                    (sender as XApi).Log.Info("{0}:{1}", status, userLogin.ToFormattedStringShort());
+                }
+                else
+                {
+                    (sender as XApi).Log.Info("{0}:{1}", status, userLogin.ToFormattedStringLong());
+                }
+            }
+            else
+            {
+                (sender as XApi).Log.Info("{0}", status);
+            }
         }
     }
 }

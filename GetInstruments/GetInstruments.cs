@@ -1,4 +1,5 @@
 ﻿using DataReceiver;
+using NLog;
 using QuantBox;
 using QuantBox.XAPI;
 using QuantBox.XAPI.Callback;
@@ -43,8 +44,11 @@ namespace GetInstruments
         public void Connect()
         {
             XApi api = new XApi(ConnectionConfig.LibPath);
+
             api.Server = ConnectionConfig.Server;
             api.User = ConnectionConfig.User;
+
+            api.Log = LogManager.GetLogger(string.Format("{0}.{1}", api.Server.BrokerID, api.User.UserID));
             api.MaxSubscribedInstrumentsCount = ConnectionConfig.SubscribePerSession;
 
             api.OnConnectionStatus = OnConnectionStatus;
@@ -64,11 +68,6 @@ namespace GetInstruments
             {
                 api.ReqQryInstrument("", "");
             }
-        }
-
-        private void OnConnectionStatus(object sender, ConnectionStatus status, ref RspUserLoginField userLogin, int size1)
-        {
-            Console.WriteLine("登录状态：" + status + userLogin.ErrorMsg());
         }
 
         private void OnRspQryInstrument(object sender, ref InstrumentField instrument, int size1, bool bIsLast)
