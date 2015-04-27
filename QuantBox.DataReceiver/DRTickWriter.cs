@@ -1,4 +1,6 @@
-﻿using QuantBox.Data.Serializer.V2;
+﻿using Ideafixxxer.Generics;
+using QuantBox;
+using QuantBox.Data.Serializer.V2;
 using QuantBox.XAPI;
 using System;
 using System.Collections.Generic;
@@ -33,7 +35,8 @@ namespace DataReceiver
             //tick.LocalTime_Msec = (int)(DateTime.Now - codec.GetActionDayDateTime(tick)).TotalMilliseconds;
 
             codec.SetSymbol(tick, pDepthMarketData.Symbol);
-            codec.SetExchange(tick, pDepthMarketData.ExchangeID);
+            if (pDepthMarketData.Exchange != ExchangeType.Undefined)
+                codec.SetExchange(tick, Enum<ExchangeType>.ToString(pDepthMarketData.Exchange));
             codec.SetLowerLimitPrice(tick, pDepthMarketData.LowerLimitPrice);
             codec.SetUpperLimitPrice(tick, pDepthMarketData.UpperLimitPrice);
 
