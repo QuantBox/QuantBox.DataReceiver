@@ -68,14 +68,21 @@ namespace DataReceiver
         /// <param name="e"></param>
         private void OnReload(object source, FileSystemEventArgs e)
         {
-            Log.Info("文件变动{0},{1}", e.ChangeType, e.FullPath);
-            if (e.ChangeType == WatcherChangeTypes.Changed)
+            // 只关注这三个文件的变化
+            if(e.FullPath.EndsWith(InstrumentInfoListFileName)
+                || e.FullPath.EndsWith(IncludeFilterListFileName)
+                || e.FullPath.EndsWith(ExcludeFilterListFileName)
+                )
             {
-                ProcessConfig(e.FullPath);
-            }
-            else if (e.ChangeType == WatcherChangeTypes.Deleted)
-            {
-                //CreateConfig(e.FullPath);
+                Log.Info("文件变动{0},{1}", e.ChangeType, e.FullPath);
+                if (e.ChangeType == WatcherChangeTypes.Changed)
+                {
+                    ProcessConfig(e.FullPath);
+                }
+                else if (e.ChangeType == WatcherChangeTypes.Deleted)
+                {
+                    //CreateConfig(e.FullPath);
+                }
             }
         }
 
