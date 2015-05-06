@@ -14,6 +14,7 @@ namespace DataReceiver
 {
     public class ApiBase
     {
+        public int TradingDay;
         public string ConfigPath;
         public string InstrumentInfoListFileName = @"InstrumentInfoList.json";
         public List<InstrumentInfo> InstrumentInfoList = new List<InstrumentInfo>();
@@ -32,7 +33,7 @@ namespace DataReceiver
 
         protected void Save(string path, string file, object obj)
         {
-            using (FileStream fs = File.Open(Path.Combine(path, file), FileMode.Create, FileAccess.Write, FileShare.Read))
+            using (FileStream fs = File.Open(Path.Combine(path, file), FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
             {
                 using (TextWriter writer = new StreamWriter(fs))
                 {
@@ -125,7 +126,7 @@ namespace DataReceiver
             return true;
         }
 
-        protected void OnConnectionStatus(object sender, ConnectionStatus status, ref RspUserLoginField userLogin, int size1)
+        protected virtual void OnConnectionStatus(object sender, ConnectionStatus status, ref RspUserLoginField userLogin, int size1)
         {
             if (size1 > 0)
             {
@@ -141,6 +142,10 @@ namespace DataReceiver
             else
             {
                 (sender as XApi).Log.Info("{0}", status);
+            }
+            if (status == ConnectionStatus.Logined)
+            {
+                TradingDay = userLogin.TradingDay;
             }
         }
     }

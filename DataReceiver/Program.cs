@@ -30,7 +30,9 @@ namespace DataReceiver
         public const string KEY_InstrumentInfoListFileName = "InstrumentInfoListFileName";
         public const string KEY_IncludeFilterListFileName = "IncludeFilterListFileName";
         public const string KEY_ExcludeFilterListFileName = "ExcludeFilterListFileName";
+
         public const string KEY_SaveAsInstrumentInfoListName = @"SaveAsInstrumentInfoListName";
+        public const string KEY_SaveAsTradingDayName = @"SaveAsTradingDayName";
 
         static void Main(string[] args)
         {
@@ -47,6 +49,9 @@ namespace DataReceiver
             dataReceiver.SaveAsInstrumentInfoListName = Path.Combine(
                 ConfigurationManager.AppSettings[KEY_DataPath],
                 ConfigurationManager.AppSettings[KEY_SaveAsInstrumentInfoListName]);
+            dataReceiver.SaveAsTradingDayName = Path.Combine(
+                ConfigurationManager.AppSettings[KEY_DataPath],
+                ConfigurationManager.AppSettings[KEY_SaveAsTradingDayName]);
 
             dataReceiver.LoadConnectionConfig();
             dataReceiver.Connect();

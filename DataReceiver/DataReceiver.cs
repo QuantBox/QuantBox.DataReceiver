@@ -26,7 +26,9 @@ namespace DataReceiver
         public string ConnectionConfigListFileName = @"ConnectionConfigList.json";
         public string IncludeFilterListFileName = @"IncludeFilterList.json";
         public string ExcludeFilterListFileName = @"ExcludeFilterList.json";
+
         public string SaveAsInstrumentInfoListName = @"SaveAsInstrumentInfoListName";
+        public string SaveAsTradingDayName = @"SaveAsTradingDayName";
 
         public ActionBlock<DepthMarketDataField> Input;
         private Logger Log = LogManager.GetCurrentClassLogger();
@@ -136,6 +138,11 @@ namespace DataReceiver
         public void SaveAsInstrumentInfoList()
         {
             Save(ConfigPath, SaveAsInstrumentInfoListName, InstrumentInfoList);
+        }
+
+        public void SaveAsTradingDay()
+        {
+            Save(ConfigPath, SaveAsTradingDayName, TradingDay);
         }
 
         public void LoadConnectionConfig()
@@ -330,6 +337,16 @@ namespace DataReceiver
         public void OnInputMarketData(DepthMarketDataField pDepthMarketData)
         {
             TickWriter.Write(ref pDepthMarketData);
+        }
+
+        protected override void OnConnectionStatus(object sender, ConnectionStatus status, ref RspUserLoginField userLogin, int size1)
+        {
+            base.OnConnectionStatus(sender, status, ref userLogin, size1);
+            if (status == ConnectionStatus.Logined)
+            {
+                TradingDay = userLogin.TradingDay;
+                SaveAsTradingDay();
+            }
         }
     }
 }
