@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveData", "ArchiveData\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataReceiver", "DataReceiver\DataReceiver.csproj", "{9E58B4E4-342B-483A-BB7F-F89A52EF7CBF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataDownload", "DataDownload\DataDownload.csproj", "{529AAC14-B1FF-4524-929D-40756CAB260B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{9E58B4E4-342B-483A-BB7F-F89A52EF7CBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E58B4E4-342B-483A-BB7F-F89A52EF7CBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E58B4E4-342B-483A-BB7F-F89A52EF7CBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{529AAC14-B1FF-4524-929D-40756CAB260B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{529AAC14-B1FF-4524-929D-40756CAB260B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{529AAC14-B1FF-4524-929D-40756CAB260B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{529AAC14-B1FF-4524-929D-40756CAB260B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
