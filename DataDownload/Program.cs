@@ -16,7 +16,11 @@ namespace DataDownload
             dd.PASSWORD = "ABC";
             dd.BASE_URL = "http://localhost/";
             //dd.PATH_Historical = "";
-            Console.WriteLine(dd.GetHistorical("CFFEX", "IF", "IF1450", 20150410));
+            var ll = dd.GetHistorical("CFFEX", "IF", "IF1504", 20150330, 20150520);
+            foreach(var l in ll)
+            {
+                Console.WriteLine(l.Item1 + l.Item2);
+            }
         }
     }
 }

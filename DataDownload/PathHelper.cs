@@ -11,9 +11,8 @@ namespace ArchiveData
     //"D:\Program Files\7-Zip\7z.exe" a -t7z "D:\test\Data_TradingDay\20150326.7z" "D:\test\Data_TradingDay\20150326\*" -m0=PPMd -mx=9
     //"D:\Program Files\7-Zip\7z.exe" a -t7z "D:\test\Data_TradingDay\20150326.7z" "D:\test\Data_TradingDay\20150326\*" -m0=PPMd -mx=9
 
-    class PathHelper
+    public class PathHelper
     {
-
         public static bool SplitFileName(string fileName, out string exchange, out string product,
             out string instrument, out string date)
         {

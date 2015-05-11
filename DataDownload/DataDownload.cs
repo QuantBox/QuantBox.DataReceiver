@@ -26,18 +26,12 @@ namespace DataDownload
         public string GetRealtime(string exchange, string instrument)
         {
             string url = string.Format(BASE_URL+URL_Realtime,exchange,instrument);
-            DirectoryInfo di = new DirectoryInfo(PATH_Realtime);
-            if (!di.Exists)
-                di.Create();
             return DownloadFile(url, PATH_Realtime);
         }
 
         public string GetTradingDay(int tradingDay)
         {
             string url = string.Format(BASE_URL + URL_TradingDay,tradingDay);
-            DirectoryInfo di = new DirectoryInfo(PATH_TradingDay);
-            if (!di.Exists)
-                di.Create();
             return DownloadFile(url, PATH_TradingDay);
         }
 
@@ -45,13 +39,45 @@ namespace DataDownload
         {
             string url = string.Format(BASE_URL + URL_Historical, exchange, product, instrument, tradingDay);
             string newpath = Path.Combine(PATH_Historical, exchange, product, instrument);
-            DirectoryInfo di = new DirectoryInfo(newpath);
-            if (!di.Exists)
-                di.Create();
             return DownloadFile(url, newpath);
         }
 
-        protected string DownloadFile(string url,string local_path)
+        public string GetHistorical(string exchange, string product, string instrument, DateTime tradingDay)
+        {
+            int date = tradingDay.Year * 10000 + tradingDay.Month * 100 + tradingDay.Day;
+            return GetHistorical(exchange, product, instrument, date);
+        }
+
+        public List<Tuple<string,string>> GetHistorical(string exchange, string product, string instrument, int datatime1,int datatime2)
+        {
+            List<Tuple<string, string>> file_paths = new List<Tuple<string, string>>();
+
+            DateTime _datetime1 = new DateTime(datatime1 / 10000, datatime1 % 10000 / 100, datatime1 % 100);
+            DateTime _datatime2 = new DateTime(datatime2 / 10000, datatime2 % 10000 / 100, datatime2 % 100);
+
+            for (DateTime datetime = _datetime1; datetime <= _datatime2; datetime = datetime.AddDays(1))
+            {
+                if (datetime.DayOfWeek == DayOfWeek.Saturday || datetime.DayOfWeek == DayOfWeek.Sunday)
+                    continue;
+
+                try
+                {
+                    file_paths.Add(new Tuple<string, string>(
+                        GetHistorical(exchange, product, instrument, datetime),
+                        null));
+                }
+                catch (Exception ex)
+                {
+                    file_paths.Add(new Tuple<string, string>(
+                        null,
+                        string.Format("{0}/{1}/{2}/{3} - {4}", exchange, product, instrument, datetime.ToString("yyyyMMdd"), ex.Message)));
+                }
+            }
+
+            return file_paths;
+        }
+
+        protected string DownloadFile(string url, string local_path)
         {
             string file_fullname = "";
             string target = "";
@@ -78,6 +104,9 @@ namespace DataDownload
                 using (Stream stream = wr.GetResponseStream())
                 {
                     file_fullname = Path.Combine(local_path, target);
+                    DirectoryInfo di = new DirectoryInfo(local_path);
+                    if (!di.Exists)
+                        di.Create();
                     //文件流，流信息读到文件流中，读完关闭
                     using (FileStream fs = File.Create(file_fullname))
                     {
