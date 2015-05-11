@@ -14,7 +14,8 @@ namespace DataDownload
             var dd = new DataDownload();
             dd.USERNAME = "test1";
             dd.PASSWORD = "ABC";
-            dd
+            dd.BASE_URL = "http://localhost/";
+            //dd.PATH_Historical = "";
             Console.WriteLine(dd.GetHistorical("CFFEX", "IF", "IF1450", 20150410));
         }
     }
