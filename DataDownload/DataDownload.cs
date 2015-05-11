@@ -23,6 +23,8 @@ namespace DataDownload
         public string USERNAME = "guest";
         public string PASSWORD = "guest";
 
+        private CookieContainer CookieContainer = new CookieContainer();
+
         public string GetRealtime(string exchange, string instrument)
         {
             string url = string.Format(BASE_URL+URL_Realtime,exchange,instrument);
@@ -86,43 +88,55 @@ namespace DataDownload
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
             NetworkCredential nc = new NetworkCredential(USERNAME, PASSWORD);
             req.Credentials = nc;
-            
-            using (HttpWebResponse wr = (HttpWebResponse)req.GetResponse())
+            req.CookieContainer = CookieContainer;
+            try
             {
-                string desc = wr.Headers["Content-Disposition"];
-                if (desc != null)
+                using (HttpWebResponse wr = (HttpWebResponse)req.GetResponse())
                 {
-                    string fstr = "filename=";
-                    int pos1 = desc.IndexOf(fstr);
-                    if (pos1 > 0)
+
+                    string desc = wr.Headers["Content-Disposition"];
+                    if (desc != null)
                     {
-                        string fn = desc.Substring(pos1 + fstr.Length);
-                        if (fn != "")
-                            target = fn;
-                    }
-                }
-                using (Stream stream = wr.GetResponseStream())
-                {
-                    file_fullname = Path.Combine(local_path, target);
-                    DirectoryInfo di = new DirectoryInfo(local_path);
-                    if (!di.Exists)
-                        di.Create();
-                    //文件流，流信息读到文件流中，读完关闭
-                    using (FileStream fs = File.Create(file_fullname))
-                    {
-                        //建立字节组，并设置它的大小是多少字节
-                        byte[] bytes = new byte[10240];
-                        int n = 0;
-                        do
+                        string fstr = "filename=";
+                        int pos1 = desc.IndexOf(fstr);
+                        if (pos1 > 0)
                         {
-                            //一次从流中读多少字节，并把值赋给Ｎ，当读完后，Ｎ为０,并退出循环
-                            n = stream.Read(bytes, 0, 1024);
-                            fs.Write(bytes, 0, n);　//将指定字节的流信息写入文件流中
-                        } while (n > 0);
+                            string fn = desc.Substring(pos1 + fstr.Length);
+                            if (fn != "")
+                                target = fn;
+                        }
                     }
-                    File.SetLastWriteTime(file_fullname, wr.LastModified);
+
+                    using (Stream stream = wr.GetResponseStream())
+                    {
+                        file_fullname = Path.Combine(local_path, target);
+                        DirectoryInfo di = new DirectoryInfo(local_path);
+                        if (!di.Exists)
+                            di.Create();
+
+                        //文件流，流信息读到文件流中，读完关闭
+                        using (FileStream fs = File.Create(file_fullname))
+                        {
+                            //建立字节组，并设置它的大小是多少字节
+                            byte[] bytes = new byte[10240];
+                            int n = 0;
+                            do
+                            {
+                                //一次从流中读多少字节，并把值赋给Ｎ，当读完后，Ｎ为０,并退出循环
+                                n = stream.Read(bytes, 0, 1024);
+                                fs.Write(bytes, 0, n);　//将指定字节的流信息写入文件流中
+                            } while (n > 0);
+                        }
+                        File.SetLastWriteTime(file_fullname, wr.LastModified);
+                    }
                 }
             }
+            catch
+            {
+                Console.Write(req);
+            }
+
+            
             return file_fullname;
         }
     }
