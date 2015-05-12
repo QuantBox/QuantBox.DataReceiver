@@ -43,6 +43,7 @@ namespace DataReceiver
         public string Symbol;
         public string Instrument;
         public string Exchange;
+        public string ProductID;
         public double TickSize;
         public double Factor;
         [JsonIgnore]

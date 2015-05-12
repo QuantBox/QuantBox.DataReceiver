@@ -26,6 +26,7 @@ namespace ArchiveData
             // SR503C1507.CZCE_20150430
             // 600000.SSE_20150506
             // SPC a1506&b1507._20150501
+            // IO1506-C-2768&IO1506-C-2768._20150501
             Regex regex1 = new Regex(@"([A-za-z0-9\-& ]*)\.([A-za-z]*)_(\d{4,8})");
             Match match1 = regex1.Match(fileName);
             if (match1.Success)
@@ -37,10 +38,11 @@ namespace ArchiveData
                 if (instrument.IndexOf("&") > -1)
                 {
                     // SPC a1506&b1507
+                    // IO1506-C-2768&IO1506-C-2768
                     char[] arr = instrument.ToCharArray();
                     for (int i = 0; i < arr.Length; i++)
                     {
-                        if (!(arr[i] >= '0' && arr[i] <= '9'))
+                        if (!(arr[i] >= '0' && arr[i] <= '9' || arr[i]=='-'))
                         {
                             product += arr[i];
                         }

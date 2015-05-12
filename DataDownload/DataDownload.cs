@@ -1,10 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace DataDownload
 {
@@ -19,40 +22,54 @@ namespace DataDownload
         public string PATH_Realtime = @"E:\test\Data";
         public string PATH_TradingDay = @"E:\test\Data_TradingDay";
         public string PATH_Historical = @"E:\test\Data_Instrument";
-        
-        public string USERNAME = "guest";
-        public string PASSWORD = "guest";
+
+        private string _USERNAME;
+        public string USERNAME
+        {
+            get { return _USERNAME; }
+            set {
+                _USERNAME = value;
+
+                Cookies = (Dictionary<string, Cookie>)Load(_USERNAME, Cookies);
+                foreach (var cook in Cookies.Values)
+                {
+                    CookieContainer.Add(cook);
+                }
+            }
+        }
+        public string PASSWORD { get; set; }
 
         private CookieContainer CookieContainer = new CookieContainer();
+        private Dictionary<string, Cookie> Cookies = new Dictionary<string, Cookie>();
 
-        public string GetRealtime(string exchange, string instrument)
+        public Tuple<int, string> GetRealtime(string exchange, string instrument)
         {
-            string url = string.Format(BASE_URL+URL_Realtime,exchange,instrument);
+            string url = string.Format(BASE_URL + URL_Realtime, HttpUtility.UrlEncode(exchange), HttpUtility.UrlEncode(instrument));
             return DownloadFile(url, PATH_Realtime);
         }
 
-        public string GetTradingDay(int tradingDay)
+        public Tuple<int, string> GetTradingDay(int tradingDay)
         {
             string url = string.Format(BASE_URL + URL_TradingDay,tradingDay);
             return DownloadFile(url, PATH_TradingDay);
         }
 
-        public string GetHistorical(string exchange, string product, string instrument, int tradingDay)
+        public Tuple<int, string> GetHistorical(string exchange, string product, string instrument, int tradingDay)
         {
-            string url = string.Format(BASE_URL + URL_Historical, exchange, product, instrument, tradingDay);
+            string url = string.Format(BASE_URL + URL_Historical, HttpUtility.UrlEncode(exchange), HttpUtility.UrlEncode(product), HttpUtility.UrlEncode(instrument), tradingDay);
             string newpath = Path.Combine(PATH_Historical, exchange, product, instrument);
             return DownloadFile(url, newpath);
         }
 
-        public string GetHistorical(string exchange, string product, string instrument, DateTime tradingDay)
+        public Tuple<int, string> GetHistorical(string exchange, string product, string instrument, DateTime tradingDay)
         {
             int date = tradingDay.Year * 10000 + tradingDay.Month * 100 + tradingDay.Day;
             return GetHistorical(exchange, product, instrument, date);
         }
 
-        public List<Tuple<string,string>> GetHistorical(string exchange, string product, string instrument, int datatime1,int datatime2)
+        public List<Tuple<int,string>> GetHistorical(string exchange, string product, string instrument, int datatime1,int datatime2)
         {
-            List<Tuple<string, string>> file_paths = new List<Tuple<string, string>>();
+            List<Tuple<int, string>> file_paths = new List<Tuple<int, string>>();
 
             DateTime _datetime1 = new DateTime(datatime1 / 10000, datatime1 % 10000 / 100, datatime1 % 100);
             DateTime _datatime2 = new DateTime(datatime2 / 10000, datatime2 % 10000 / 100, datatime2 % 100);
@@ -62,25 +79,90 @@ namespace DataDownload
                 if (datetime.DayOfWeek == DayOfWeek.Saturday || datetime.DayOfWeek == DayOfWeek.Sunday)
                     continue;
 
-                try
-                {
-                    file_paths.Add(new Tuple<string, string>(
-                        GetHistorical(exchange, product, instrument, datetime),
-                        null));
-                }
-                catch (Exception ex)
-                {
-                    file_paths.Add(new Tuple<string, string>(
-                        null,
-                        string.Format("{0}/{1}/{2}/{3} - {4}", exchange, product, instrument, datetime.ToString("yyyyMMdd"), ex.Message)));
-                }
+                file_paths.Add(GetHistorical(exchange, product, instrument, datetime));
             }
 
             return file_paths;
         }
 
-        protected string DownloadFile(string url, string local_path)
+        #region Cookie写入
+        private static JsonSerializerSettings jSetting = new JsonSerializerSettings()
         {
+            // json文件格式使用非紧凑模式
+            //NullValueHandling = NullValueHandling.Ignore,
+            //DefaultValueHandling = DefaultValueHandling.Ignore,
+            Formatting = Formatting.Indented,
+        };
+
+        protected void Save(string file, object obj)
+        {
+            IsolatedStorageFile myIsolatedStorage = IsolatedStorageFile.GetUserStoreForAssembly();
+            using (FileStream fs = myIsolatedStorage.OpenFile(file, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+            {
+                using (TextWriter writer = new StreamWriter(fs))
+                {
+                    writer.Write("{0}", JsonConvert.SerializeObject(obj, obj.GetType(), jSetting));
+                    writer.Close();
+                }
+            }
+        }
+        protected object Load(string file, object obj)
+        {
+            try
+            {
+                object ret;
+                IsolatedStorageFile myIsolatedStorage = IsolatedStorageFile.GetUserStoreForAssembly();
+                using (FileStream fs = myIsolatedStorage.OpenFile(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    using (TextReader reader = new StreamReader(fs))
+                    {
+                        ret = JsonConvert.DeserializeObject(reader.ReadToEnd(), obj.GetType());
+                        reader.Close();
+                    }
+                }
+
+                return ret;
+            }
+            catch
+            {
+            }
+            return obj;
+        }
+
+        private void SaveCookie(HttpWebResponse rsp)
+        {
+            if (rsp.Headers["Set-Cookie"] != null)
+            {
+                foreach (Cookie cook in rsp.Cookies)
+                {
+                    Cookies[cook.Name] = cook;
+                    Save(_USERNAME, Cookies);
+
+                    //Console.WriteLine("Cookie:");
+                    //Console.WriteLine("{0} = {1}", cook.Name, cook.Value);
+                    //Console.WriteLine("Domain: {0}", cook.Domain);
+                    //Console.WriteLine("Path: {0}", cook.Path);
+                    //Console.WriteLine("Port: {0}", cook.Port);
+                    //Console.WriteLine("Secure: {0}", cook.Secure);
+
+                    //Console.WriteLine("When issued: {0}", cook.TimeStamp);
+                    //Console.WriteLine("Expires: {0} (expired? {1})",
+                    //    cook.Expires, cook.Expired);
+                    //Console.WriteLine("Don't save: {0}", cook.Discard);
+                    //Console.WriteLine("Comment: {0}", cook.Comment);
+                    //Console.WriteLine("Uri for comments: {0}", cook.CommentUri);
+                    //Console.WriteLine("Version: RFC {0}", cook.Version == 1 ? "2109" : "2965");
+
+                    //// Show the string representation of the cookie.
+                    //Console.WriteLine("String: {0}", cook.ToString());
+                }
+            }
+        }
+        #endregion
+
+        protected Tuple<int,string> DownloadFile(string url, string local_path)
+        {
+            var httpStatusCode = 200;
             string file_fullname = "";
             string target = "";
 
@@ -89,11 +171,11 @@ namespace DataDownload
             NetworkCredential nc = new NetworkCredential(USERNAME, PASSWORD);
             req.Credentials = nc;
             req.CookieContainer = CookieContainer;
+
             try
             {
                 using (HttpWebResponse wr = (HttpWebResponse)req.GetResponse())
                 {
-
                     string desc = wr.Headers["Content-Disposition"];
                     if (desc != null)
                     {
@@ -129,15 +211,26 @@ namespace DataDownload
                         }
                         File.SetLastWriteTime(file_fullname, wr.LastModified);
                     }
+
+                    SaveCookie(wr);
                 }
             }
-            catch
+            catch (WebException ex)
             {
-                Console.Write(req);
+                var rsp = ex.Response as HttpWebResponse;
+                httpStatusCode = (int)rsp.StatusCode;
+                file_fullname = string.Format("{0} - {1}", ex.Message, url);
+
+                SaveCookie(rsp);
+            }
+            catch (Exception ex)
+            {
+                httpStatusCode = 0;
+                file_fullname = string.Format("{0} - {1}", ex.Message, url);
             }
 
-            
-            return file_fullname;
+            return new Tuple<int,string>(httpStatusCode,file_fullname);
         }
+
     }
 }

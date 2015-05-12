@@ -51,37 +51,34 @@ namespace ArchiveData
                         exchange = DefaultExchange;
                     }
 
-                    if (!string.IsNullOrWhiteSpace(OutputPath_TradingDay))
+                    DirectoryInfo DI_TradingDay = new DirectoryInfo(Path.Combine(OutputPath_TradingDay, date));
+                    if (!DI_TradingDay.Exists)
+                        DI_TradingDay.Create();
+                    string Path_TradingDay = Path.Combine(DI_TradingDay.FullName, f.Name);
+
+                    // 将当前目录下内容复制到指定日期目录
+                    File.Copy(f.FullName, Path_TradingDay, true);
+
+                    
                     {
-                        DirectoryInfo DI_TradingDay = new DirectoryInfo(Path.Combine(OutputPath_TradingDay, date));
-                        if (!DI_TradingDay.Exists)
-                            DI_TradingDay.Create();
-                        string Path_TradingDay = Path.Combine(DI_TradingDay.FullName, f.Name);
+                        DirectoryInfo DI_Instrument = new DirectoryInfo(Path.Combine(OutputPath_Instrument, exchange, product, instrument));
+                        if (!DI_Instrument.Exists)
+                            DI_Instrument.Create();
+                        string Path_Instrument = Path.Combine(DI_Instrument.FullName, f.Name);
+                        // 将当前目录下内容压缩到指定合约目录下
 
-                        // 将当前目录下内容复制到指定日期目录
-                        File.Copy(f.FullName, Path_TradingDay, true);
-
-                        if (!string.IsNullOrWhiteSpace(OutputPath_Instrument))
-                        {
-                            DirectoryInfo DI_Instrument = new DirectoryInfo(Path.Combine(OutputPath_Instrument, exchange, product, instrument));
-                            if (!DI_Instrument.Exists)
-                                DI_Instrument.Create();
-                            string Path_Instrument = Path.Combine(DI_Instrument.FullName, f.Name);
-                            // 将当前目录下内容压缩到指定合约目录下
-
-                            // 文件已经打开的情况下，无法进行压缩，这个地方处理一下
-                            PathHelper.SevenZipFile(SevenZipExePath, Path_Instrument + ".7z", Path_TradingDay);
-                        }
-
-                        // 只有备份了一份，才有去删除
-                        if (Clear_DataPath)
-                        {
-                            File.Delete(f.FullName);
-                        }
-
-                        // 记录下处理了哪些交易日
-                        Set_TradingDay.Add(DI_TradingDay.FullName);
+                        // 文件已经打开的情况下，无法进行压缩，这个地方处理一下
+                        PathHelper.SevenZipFile(SevenZipExePath, Path_Instrument + ".7z", Path_TradingDay);
                     }
+
+                    // 只有备份了一份，才会去删除
+                    if (Clear_DataPath)
+                    {
+                        File.Delete(f.FullName);
+                    }
+
+                    // 记录下处理了哪些交易日
+                    Set_TradingDay.Add(DI_TradingDay.FullName);
 
                     Log.Info("处理完:{0}", f.FullName);
                 }

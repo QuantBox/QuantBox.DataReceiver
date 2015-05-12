@@ -79,6 +79,7 @@ namespace GetInstruments
                     Symbol = instrument.Symbol,
                     Instrument = instrument.InstrumentID,
                     Exchange = instrument.ExchangeID,
+                    ProductID = instrument.ProductID,
                     TickSize = instrument.PriceTick,
                     Factor = instrument.VolumeMultiple
                 });
