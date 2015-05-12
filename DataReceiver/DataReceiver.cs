@@ -137,12 +137,12 @@ namespace DataReceiver
         /// </summary>
         public void SaveAsInstrumentInfoList()
         {
-            Save(ConfigPath, SaveAsInstrumentInfoListName, InstrumentInfoList);
+            Save(DataPath, SaveAsInstrumentInfoListName, InstrumentInfoList);
         }
 
         public void SaveAsTradingDay()
         {
-            Save(ConfigPath, SaveAsTradingDayName, TradingDay);
+            Save(DataPath, SaveAsTradingDayName, TradingDay);
         }
 
         public void LoadConnectionConfig()

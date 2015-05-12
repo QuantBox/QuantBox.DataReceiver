@@ -16,6 +16,7 @@ namespace DataReceiver
     {
         public int TradingDay;
         public string ConfigPath;
+        public string DataPath;
         public string InstrumentInfoListFileName = @"InstrumentInfoList.json";
         public List<InstrumentInfo> InstrumentInfoList = new List<InstrumentInfo>();
         

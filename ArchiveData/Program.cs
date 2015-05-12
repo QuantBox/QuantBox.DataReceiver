@@ -58,7 +58,6 @@ namespace ArchiveData
 
                     // 将当前目录下内容复制到指定日期目录
                     File.Copy(f.FullName, Path_TradingDay, true);
-
                     
                     {
                         DirectoryInfo DI_Instrument = new DirectoryInfo(Path.Combine(OutputPath_Instrument, exchange, product, instrument));

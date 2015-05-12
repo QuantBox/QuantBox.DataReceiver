@@ -42,16 +42,13 @@ namespace DataReceiver
             dataReceiver.TickWriter = TickWriter;
 
             dataReceiver.ConfigPath = ConfigurationManager.AppSettings[KEY_ConfigPath];
+            dataReceiver.DataPath = ConfigurationManager.AppSettings[KEY_DataPath];
             dataReceiver.ConnectionConfigListFileName = ConfigurationManager.AppSettings[KEY_ConnectionConfigListFileName];
             dataReceiver.InstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_InstrumentInfoListFileName];
             dataReceiver.IncludeFilterListFileName = ConfigurationManager.AppSettings[KEY_IncludeFilterListFileName];
             dataReceiver.ExcludeFilterListFileName = ConfigurationManager.AppSettings[KEY_ExcludeFilterListFileName];
-            dataReceiver.SaveAsInstrumentInfoListName = Path.Combine(
-                ConfigurationManager.AppSettings[KEY_DataPath],
-                ConfigurationManager.AppSettings[KEY_SaveAsInstrumentInfoListName]);
-            dataReceiver.SaveAsTradingDayName = Path.Combine(
-                ConfigurationManager.AppSettings[KEY_DataPath],
-                ConfigurationManager.AppSettings[KEY_SaveAsTradingDayName]);
+            dataReceiver.SaveAsInstrumentInfoListName = ConfigurationManager.AppSettings[KEY_SaveAsInstrumentInfoListName];
+            dataReceiver.SaveAsTradingDayName = ConfigurationManager.AppSettings[KEY_SaveAsTradingDayName];
 
             dataReceiver.LoadConnectionConfig();
             dataReceiver.Connect();
