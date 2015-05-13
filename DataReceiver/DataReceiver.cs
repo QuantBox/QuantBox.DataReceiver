@@ -5,6 +5,7 @@ using QuantBox.XAPI;
 using QuantBox.XAPI.Callback;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -22,13 +23,18 @@ namespace DataReceiver
         public List<ConnectionConfig> ConnectionConfigList;
         public List<InstrumentFilterConfig> IncludeFilterList;
         public List<InstrumentFilterConfig> ExcludeFilterList;
+        public List<Tuple<TimeSpan, string, string>> ScheduleTasksList;
 
         public string ConnectionConfigListFileName = @"ConnectionConfigList.json";
         public string IncludeFilterListFileName = @"IncludeFilterList.json";
         public string ExcludeFilterListFileName = @"ExcludeFilterList.json";
 
-        public string SaveAsInstrumentInfoListName = @"SaveAsInstrumentInfoListName";
-        public string SaveAsTradingDayName = @"SaveAsTradingDayName";
+        public string SaveAsInstrumentInfoListFileName = @"InstrumentInfoList.json";
+        public string SaveAsTradingDayFileName = @"TradingDay.json";
+
+        public string ScheduleTasksListFileName = @"ScheduleTasks.json";
+
+        private System.Timers.Timer _Timer = new System.Timers.Timer();
 
         public ActionBlock<DepthMarketDataField> Input;
         private Logger Log = LogManager.GetCurrentClassLogger();
@@ -86,6 +92,10 @@ namespace DataReceiver
                     //CreateConfig(e.FullPath);
                 }
             }
+            else if (e.FullPath.EndsWith(ScheduleTasksListFileName))
+            {
+                ProcessScheduleTasks(e.FullPath);
+            }
         }
 
         /// <summary>
@@ -117,6 +127,50 @@ namespace DataReceiver
 
             SaveAsInstrumentInfoList();
         }
+
+        public void ProcessScheduleTasks(string fullPath)
+        {
+            LoadScheduleTasks();
+
+            //ScheduleTasksList.Add(new Tuple<TimeSpan, string>(new TimeSpan(08, 50, 0), "notepad.exe"));
+            //ScheduleTasksList.Add(new Tuple<TimeSpan, string>(new TimeSpan(08, 50, 0), "notepad.exe"));
+
+            //Save(ConfigPath, ScheduleTasksListFileName, ScheduleTasksList);
+            _Timer.Elapsed -= _Timer_Elapsed;
+            _Timer.Elapsed += _Timer_Elapsed;
+            _Timer.Interval = 10 * 1000;
+            _Timer.Enabled = true;
+        }
+
+        int CheckedTime = -1;
+
+        void _Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            _Timer.Enabled = false;
+
+            int now = e.SignalTime.Hour*100+e.SignalTime.Minute;
+            if (CheckedTime == now)
+            {
+                _Timer.Enabled = true;
+                return;
+            }
+            CheckedTime = now;
+
+            foreach(var it in ScheduleTasksList)
+            {
+                DateTime dt = e.SignalTime.Date.Add(it.Item1);
+                int t = dt.Hour*100+dt.Minute;
+                if(t == now)
+                {
+                    Log.Info("执行任务:{0} {1} {2}", it.Item1, it.Item2, it.Item3);
+                    var proc = Process.Start(it.Item2, it.Item3);
+                    //proc.WaitForExit();
+                    break;
+                }
+            }
+
+            _Timer.Enabled = true;
+        }
         #endregion
 
         public DataReceiver()
@@ -137,12 +191,12 @@ namespace DataReceiver
         /// </summary>
         public void SaveAsInstrumentInfoList()
         {
-            Save(DataPath, SaveAsInstrumentInfoListName, InstrumentInfoList);
+            Save(DataPath, SaveAsInstrumentInfoListFileName, InstrumentInfoList);
         }
 
         public void SaveAsTradingDay()
         {
-            Save(DataPath, SaveAsTradingDayName, TradingDay);
+            Save(DataPath, SaveAsTradingDayFileName, TradingDay);
         }
 
         public void LoadConnectionConfig()
@@ -171,6 +225,17 @@ namespace DataReceiver
                 IncludeFilterList = new List<InstrumentFilterConfig>();
             if (ExcludeFilterList == null)
                 ExcludeFilterList = new List<InstrumentFilterConfig>();
+        }
+
+        public void LoadScheduleTasks()
+        {
+            ScheduleTasksList = new List<Tuple<TimeSpan, string, string>>();
+
+            ScheduleTasksList = (List<Tuple<TimeSpan, string, string>>)Load(ConfigPath, ScheduleTasksListFileName, ScheduleTasksList);
+            if (ScheduleTasksList == null)
+                ScheduleTasksList = new List<Tuple<TimeSpan, string, string>>();
+
+            Log.Info("加载计划任务数:{0}", ScheduleTasksList.Count);
         }
 
         public void Connect()

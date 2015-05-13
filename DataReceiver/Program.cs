@@ -31,8 +31,10 @@ namespace DataReceiver
         public const string KEY_IncludeFilterListFileName = "IncludeFilterListFileName";
         public const string KEY_ExcludeFilterListFileName = "ExcludeFilterListFileName";
 
-        public const string KEY_SaveAsInstrumentInfoListName = @"SaveAsInstrumentInfoListName";
-        public const string KEY_SaveAsTradingDayName = @"SaveAsTradingDayName";
+        public const string KEY_SaveAsInstrumentInfoListFileName = @"SaveAsInstrumentInfoListFileName";
+        public const string KEY_SaveAsTradingDayFileName = @"SaveAsTradingDayFileName";
+
+        public const string KEY_ScheduleTasksListFileName = "ScheduleTasksListFileName";
 
         static void Main(string[] args)
         {
@@ -47,20 +49,28 @@ namespace DataReceiver
             dataReceiver.InstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_InstrumentInfoListFileName];
             dataReceiver.IncludeFilterListFileName = ConfigurationManager.AppSettings[KEY_IncludeFilterListFileName];
             dataReceiver.ExcludeFilterListFileName = ConfigurationManager.AppSettings[KEY_ExcludeFilterListFileName];
-            dataReceiver.SaveAsInstrumentInfoListName = ConfigurationManager.AppSettings[KEY_SaveAsInstrumentInfoListName];
-            dataReceiver.SaveAsTradingDayName = ConfigurationManager.AppSettings[KEY_SaveAsTradingDayName];
+            
+            dataReceiver.SaveAsInstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_SaveAsInstrumentInfoListFileName];
+            dataReceiver.SaveAsTradingDayFileName = ConfigurationManager.AppSettings[KEY_SaveAsTradingDayFileName];
+
+            dataReceiver.ScheduleTasksListFileName = ConfigurationManager.AppSettings[KEY_ScheduleTasksListFileName];
 
             dataReceiver.LoadConnectionConfig();
             dataReceiver.Connect();
+
             // 由于会建立多个，所以超时时间可以长一些
             if (dataReceiver.WaitConnectd(20 * 1000))
             {
                 dataReceiver.WatcherStrat(dataReceiver.ConfigPath, "*.json");
                 // 复制老列表
                 dataReceiver.ProcessConfig(null);
+                dataReceiver.ProcessScheduleTasks(null);
+                Console.WriteLine("开始接收，按Ctrl+Q退出");
             }
-
-            Console.WriteLine("开始接收，按Ctrl+Q退出");
+            else
+            {
+                Console.WriteLine("登录超时，按Ctrl+Q退出");
+            }
 
             do
             {
