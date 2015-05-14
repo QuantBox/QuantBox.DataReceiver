@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Utility;
 
 namespace ArchiveData
 {
@@ -23,6 +24,24 @@ namespace ArchiveData
 
         static void Main(string[] args)
         {
+            CommandArgs commandArgs = CommandLine.Parse(args);
+
+            //// output all the argument pairs 
+            //Console.WriteLine("Command Line Arguments:");
+            //foreach (KeyValuePair<string, string> pair in commandArgs.ArgPairs)
+            //{
+            //    Console.WriteLine(string.Format(" {0} = {1}", pair.Key, pair.Value));
+            //}
+
+            //// output all the parameters 
+            //Console.WriteLine("\nCommand Line Parameters:");
+            //foreach (string param in commandArgs.Params)
+            //{
+            //    Console.WriteLine(" " + param);
+            //}
+
+            //return;
+
             // 遍历，某个目录
             Logger Log = LogManager.GetCurrentClassLogger();
 
@@ -31,8 +50,8 @@ namespace ArchiveData
             string OutputPath_Instrument = ConfigurationManager.AppSettings[KEY_OutputPath_Instrument];
             string DefaultExchange = ConfigurationManager.AppSettings[KEY_DefaultExchange];
             string SevenZipExePath = ConfigurationManager.AppSettings[KEY_SevenZipExePath];
-            bool Clear_DataPath = bool.Parse(ConfigurationManager.AppSettings[KEY_Clear_DataPath]);
-            bool Clear_OutputPath_TradingDay = bool.Parse(ConfigurationManager.AppSettings[KEY_Clear_OutputPath_TradingDay]);
+            bool Clear_DataPath = bool.Parse(commandArgs.ArgPairs.ContainsKey(KEY_Clear_DataPath) ? commandArgs.ArgPairs[KEY_Clear_DataPath] : ConfigurationManager.AppSettings[KEY_Clear_DataPath]);
+            bool Clear_OutputPath_TradingDay = bool.Parse(commandArgs.ArgPairs.ContainsKey(KEY_Clear_OutputPath_TradingDay) ? commandArgs.ArgPairs[KEY_Clear_OutputPath_TradingDay] : ConfigurationManager.AppSettings[KEY_Clear_OutputPath_TradingDay]);
 
             HashSet<string> Set_TradingDay = new HashSet<string>();
 
