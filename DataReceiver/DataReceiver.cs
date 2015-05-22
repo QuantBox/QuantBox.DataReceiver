@@ -36,7 +36,7 @@ namespace DataReceiver
 
         private System.Timers.Timer _Timer = new System.Timers.Timer();
 
-        public ActionBlock<DepthMarketDataField> Input;
+        public ActionBlock<DepthMarketDataNClass> Input;
         private Logger Log = LogManager.GetCurrentClassLogger();
 
         #region 配置文件重新加载
@@ -175,7 +175,7 @@ namespace DataReceiver
 
         public DataReceiver()
         {
-            Input = new ActionBlock<DepthMarketDataField>((x) => OnInputMarketData(x));
+            Input = new ActionBlock<DepthMarketDataNClass>((x) => OnInputMarketData(x));
         }
 
         public void Save()
@@ -256,7 +256,8 @@ namespace DataReceiver
                     api.MaxSubscribedInstrumentsCount = cc.SubscribePerSession;
 
                     api.OnConnectionStatus = OnConnectionStatus;
-                    api.OnRtnDepthMarketData = OnRtnDepthMarketData;
+                    //api.OnRtnDepthMarketData = OnRtnDepthMarketData;
+                    api.OnRtnDepthMarketDataN = OnRtnDepthMarketDataN;
 
                     api.Connect();
 
@@ -394,12 +395,12 @@ namespace DataReceiver
             return null;
         }
 
-        private void OnRtnDepthMarketData(object sender, ref DepthMarketDataField marketData)
+        private void OnRtnDepthMarketDataN(object sender, ref DepthMarketDataNClass marketData)
         {
             Input.Post(marketData);
         }
 
-        public void OnInputMarketData(DepthMarketDataField pDepthMarketData)
+        public void OnInputMarketData(DepthMarketDataNClass pDepthMarketData)
         {
             TickWriter.Write(ref pDepthMarketData);
         }

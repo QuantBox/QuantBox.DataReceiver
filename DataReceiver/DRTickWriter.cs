@@ -18,7 +18,7 @@ namespace DataReceiver
         }
         
         // 目前先不处理港股的tickSize变化的那种行情
-        PbTick CreateTick(ref DepthMarketDataField pDepthMarketData, PbTickCodec codec)
+        PbTick CreateTick(ref DepthMarketDataNClass pDepthMarketData, PbTickCodec codec)
         {
             var tick = new PbTick();
             tick.DepthList = new List<DepthItem>();
@@ -52,65 +52,72 @@ namespace DataReceiver
             codec.SetLastPrice(tick, pDepthMarketData.LastPrice);
             codec.SetSettlementPrice(tick, pDepthMarketData.SettlementPrice);
 
-            do
+
+            int i = 0;
+            foreach (var bid in pDepthMarketData.Bids)
             {
-
-                if (pDepthMarketData.BidVolume1 == 0)
+                if (bid.Size == 0)
                     break;
-                tick.DepthList.Insert(0, new DepthItem(codec.PriceToTick(pDepthMarketData.BidPrice1), pDepthMarketData.BidVolume1, 0));
 
-                // 先记录一个假的，防止只有买价没有卖价的情况
-                codec.SetAskPrice1(tick, pDepthMarketData.BidPrice1);
-                tick.AskPrice1 += 1;
-
-                if (pDepthMarketData.BidVolume2 == 0)
-                    break;
-                tick.DepthList.Insert(0, new DepthItem(codec.PriceToTick(pDepthMarketData.BidPrice2), pDepthMarketData.BidVolume2, 0));
-
-                if (pDepthMarketData.BidVolume3 == 0)
-                    break;
-                tick.DepthList.Insert(0, new DepthItem(codec.PriceToTick(pDepthMarketData.BidPrice3), pDepthMarketData.BidVolume3, 0));
-
-                if (pDepthMarketData.BidVolume4 == 0)
-                    break;
-                tick.DepthList.Insert(0, new DepthItem(codec.PriceToTick(pDepthMarketData.BidPrice4), pDepthMarketData.BidVolume4, 0));
-
-                if (pDepthMarketData.BidVolume5 == 0)
-                    break;
-                tick.DepthList.Insert(0, new DepthItem(codec.PriceToTick(pDepthMarketData.BidPrice5), pDepthMarketData.BidVolume5, 0));
-
-            } while (false);
-
-            do
-            {
-                if (pDepthMarketData.AskVolume1 == 0)
-                    break;
-                tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice1), pDepthMarketData.AskVolume1, 0));
                 // 记录卖一价
-                codec.SetAskPrice1(tick, pDepthMarketData.AskPrice1);
+                if (i == 0)
+                {
+                    codec.SetAskPrice1(tick, bid.Price);
+                    tick.AskPrice1 += 1;
+                }
+                ++i;
 
-                if (pDepthMarketData.AskVolume2 == 0)
+                tick.DepthList.Insert(0,new DepthItem(codec.PriceToTick(bid.Price), bid.Size, bid.Count));
+            }
+
+            
+
+
+            i = 0;
+            foreach(var ask in pDepthMarketData.Asks)
+            {
+                if (ask.Size == 0)
                     break;
-                tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice2), pDepthMarketData.AskVolume2, 0));
 
-                if (pDepthMarketData.AskVolume3 == 0)
-                    break;
-                tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice3), pDepthMarketData.AskVolume3, 0));
+                // 记录卖一价
+                if (i == 0)
+                {
+                    codec.SetAskPrice1(tick, ask.Price);
+                }
+                ++i;
 
-                if (pDepthMarketData.AskVolume4 == 0)
-                    break;
-                tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice4), pDepthMarketData.AskVolume4, 0));
+                tick.DepthList.Add(new DepthItem(codec.PriceToTick(ask.Price), ask.Size, ask.Count));
+            }
+            //do
+            //{
+            //    if (pDepthMarketData.AskVolume1 == 0)
+            //        break;
+            //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice1), pDepthMarketData.AskVolume1, 0));
+            //    // 记录卖一价
+            //    codec.SetAskPrice1(tick, pDepthMarketData.AskPrice1);
 
-                if (pDepthMarketData.AskVolume5 == 0)
-                    break;
-                tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice5), pDepthMarketData.AskVolume5, 0));
+            //    if (pDepthMarketData.AskVolume2 == 0)
+            //        break;
+            //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice2), pDepthMarketData.AskVolume2, 0));
 
-            } while (false);
+            //    if (pDepthMarketData.AskVolume3 == 0)
+            //        break;
+            //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice3), pDepthMarketData.AskVolume3, 0));
+
+            //    if (pDepthMarketData.AskVolume4 == 0)
+            //        break;
+            //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice4), pDepthMarketData.AskVolume4, 0));
+
+            //    if (pDepthMarketData.AskVolume5 == 0)
+            //        break;
+            //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice5), pDepthMarketData.AskVolume5, 0));
+
+            //} while (false);
 
             return tick;
         }
 
-        public bool Write(ref DepthMarketDataField pDepthMarketData)
+        public bool Write(ref DepthMarketDataNClass pDepthMarketData)
         {
             QuantBox.Data.Serializer.V2.TickWriter.WriterDataItem item;
             if (Items.TryGetValue(pDepthMarketData.Symbol, out item))
