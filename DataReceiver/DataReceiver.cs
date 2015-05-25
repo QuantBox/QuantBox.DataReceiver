@@ -256,8 +256,7 @@ namespace DataReceiver
                     api.MaxSubscribedInstrumentsCount = cc.SubscribePerSession;
 
                     api.OnConnectionStatus = OnConnectionStatus;
-                    //api.OnRtnDepthMarketData = OnRtnDepthMarketData;
-                    api.OnRtnDepthMarketDataN = OnRtnDepthMarketDataN;
+                    api.OnRtnDepthMarketData = OnRtnDepthMarketData;
 
                     api.Connect();
 
@@ -395,7 +394,7 @@ namespace DataReceiver
             return null;
         }
 
-        private void OnRtnDepthMarketDataN(object sender, ref DepthMarketDataNClass marketData)
+        private void OnRtnDepthMarketData(object sender, ref DepthMarketDataNClass marketData)
         {
             Input.Post(marketData);
         }

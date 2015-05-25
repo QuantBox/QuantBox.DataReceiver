@@ -52,10 +52,9 @@ namespace DataReceiver
             codec.SetLastPrice(tick, pDepthMarketData.LastPrice);
             codec.SetSettlementPrice(tick, pDepthMarketData.SettlementPrice);
 
-
-            int i = 0;
-            foreach (var bid in pDepthMarketData.Bids)
+            for(int i = pDepthMarketData.Bids.Length - 1;i>=0;--i)
             {
+                var bid = pDepthMarketData.Bids[i];
                 if (bid.Size == 0)
                     break;
 
@@ -65,17 +64,14 @@ namespace DataReceiver
                     codec.SetAskPrice1(tick, bid.Price);
                     tick.AskPrice1 += 1;
                 }
-                ++i;
 
-                tick.DepthList.Insert(0,new DepthItem(codec.PriceToTick(bid.Price), bid.Size, bid.Count));
+                tick.DepthList.Add(new DepthItem(codec.PriceToTick(bid.Price), bid.Size, bid.Count));
             }
 
-            
-
-
-            i = 0;
-            foreach(var ask in pDepthMarketData.Asks)
+            for (int i = 0; i < pDepthMarketData.Asks.Length; ++i)
             {
+                var ask = pDepthMarketData.Asks[i];
+
                 if (ask.Size == 0)
                     break;
 
@@ -84,35 +80,9 @@ namespace DataReceiver
                 {
                     codec.SetAskPrice1(tick, ask.Price);
                 }
-                ++i;
 
                 tick.DepthList.Add(new DepthItem(codec.PriceToTick(ask.Price), ask.Size, ask.Count));
             }
-            //do
-            //{
-            //    if (pDepthMarketData.AskVolume1 == 0)
-            //        break;
-            //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice1), pDepthMarketData.AskVolume1, 0));
-            //    // 记录卖一价
-            //    codec.SetAskPrice1(tick, pDepthMarketData.AskPrice1);
-
-            //    if (pDepthMarketData.AskVolume2 == 0)
-            //        break;
-            //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice2), pDepthMarketData.AskVolume2, 0));
-
-            //    if (pDepthMarketData.AskVolume3 == 0)
-            //        break;
-            //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice3), pDepthMarketData.AskVolume3, 0));
-
-            //    if (pDepthMarketData.AskVolume4 == 0)
-            //        break;
-            //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice4), pDepthMarketData.AskVolume4, 0));
-
-            //    if (pDepthMarketData.AskVolume5 == 0)
-            //        break;
-            //    tick.DepthList.Add(new DepthItem(codec.PriceToTick(pDepthMarketData.AskPrice5), pDepthMarketData.AskVolume5, 0));
-
-            //} while (false);
 
             return tick;
         }
