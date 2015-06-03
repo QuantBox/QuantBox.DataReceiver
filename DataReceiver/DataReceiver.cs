@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using FileMonitor;
+using Newtonsoft.Json;
 using NLog;
 using QuantBox;
 using QuantBox.XAPI;
@@ -40,31 +41,34 @@ namespace DataReceiver
         private Logger Log = LogManager.GetCurrentClassLogger();
 
         #region 配置文件重新加载
-        private Dictionary<string, FileSystemWatcher> watchers = new Dictionary<string, FileSystemWatcher>();
+        private Dictionary<string, Tuple<FileSystemWatcher, WatcherTimer>> watchers = new Dictionary<string, Tuple<FileSystemWatcher, WatcherTimer>>();
+
         public void WatcherStrat(string path, string filter)
         {
             string key = Path.Combine(path, filter);
-            FileSystemWatcher watcher;
-            if (!watchers.TryGetValue(key, out watcher))
+            Tuple<FileSystemWatcher, WatcherTimer> tuple;
+            if (!watchers.TryGetValue(key, out tuple))
             {
-                watcher = new FileSystemWatcher();
+                WatcherTimer timer = new WatcherTimer(OnReload);
+
+                FileSystemWatcher watcher = new FileSystemWatcher();
                 watcher.Path = path;
                 watcher.Filter = filter;
                 watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
-                watcher.Changed += new FileSystemEventHandler(OnReload);
-                watcher.Deleted += new FileSystemEventHandler(OnReload);
+                watcher.Changed += new FileSystemEventHandler(timer.OnFileChanged);
+                watcher.Deleted += new FileSystemEventHandler(timer.OnFileChanged);
                 watcher.EnableRaisingEvents = true;
+
+                tuple = new Tuple<FileSystemWatcher, WatcherTimer>(watcher,timer);
             }
-            watchers[key] = watcher;
+            watchers[key] = tuple;
         }
 
         public void WatcherStop()
         {
             foreach (var watcher in watchers.Values)
             {
-                watcher.Changed -= new FileSystemEventHandler(OnReload);
-                watcher.Deleted -= new FileSystemEventHandler(OnReload);
-                watcher.EnableRaisingEvents = false;
+                watcher.Item1.EnableRaisingEvents = false;
             }
             watchers.Clear();
         }
