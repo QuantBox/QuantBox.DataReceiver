@@ -52,6 +52,10 @@ namespace DataReceiver
             codec.SetLastPrice(tick, pDepthMarketData.LastPrice);
             codec.SetSettlementPrice(tick, pDepthMarketData.SettlementPrice);
 
+            codec.SetPreClosePrice(tick, pDepthMarketData.PreClosePrice);
+            codec.SetPreSettlementPrice(tick, pDepthMarketData.PreSettlementPrice);
+            codec.SetPreOpenInterest(tick, (long)pDepthMarketData.PreOpenInterest);
+
             for(int i = pDepthMarketData.Bids.Length - 1;i>=0;--i)
             {
                 var bid = pDepthMarketData.Bids[i];
