@@ -25,18 +25,34 @@ namespace GetInstruments
         {
             Logger Log = LogManager.GetCurrentClassLogger();
 
-            GetInstruments GetInstruments = new GetInstruments();
-            GetInstruments.ConfigPath = ConfigurationManager.AppSettings[KEY_ConfigPath];
-            GetInstruments.ConnectionConfigFileName = ConfigurationManager.AppSettings[KEY_ConnectionConfigFileName];
-            GetInstruments.InstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_InstrumentInfoListFileName];
-            GetInstruments.Load();
-            GetInstruments.Connect();
-            if(!GetInstruments.WaitConnectd(10*1000))
+            GetInstruments GetInstruments = null;
+            for (int i = 1; i <= 3; ++i)
             {
-                Log.Info("连接超时退出");
-                GetInstruments.Disconnect();
+                GetInstruments = new GetInstruments();
+                GetInstruments.ConfigPath = ConfigurationManager.AppSettings[KEY_ConfigPath];
+                GetInstruments.ConnectionConfigFileName = ConfigurationManager.AppSettings[KEY_ConnectionConfigFileName];
+                GetInstruments.InstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_InstrumentInfoListFileName];
+                GetInstruments.Load();
+                GetInstruments.Connect();
+                // 改这么大主要是金仕达接口太不给力
+                if (!GetInstruments.WaitConnectd(30 * 1000))
+                {
+                    Log.Info("连接超时,第{0}次", i);
+                    GetInstruments.Disconnect();
+                    GetInstruments = null;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (GetInstruments == null)
+            {
+                Log.Info("连接超时多次，退出");
                 return;
             }
+            
             GetInstruments.ReqQryInstrument();
             // 这个超时是否过短？因为在LTS模拟中可能要5分钟
             if(GetInstruments.WaitIsLast(60*1000))

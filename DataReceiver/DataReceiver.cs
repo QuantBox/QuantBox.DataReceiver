@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -132,6 +133,13 @@ namespace DataReceiver
             SaveAsInstrumentInfoList();
         }
 
+        public void ReSubscribe()
+        {
+            Log.Info("重新订阅:{0}", InstrumentInfoList.Count());
+            Unsubscribe(InstrumentInfoList);
+            Subscribe(InstrumentInfoList);
+        }
+
         public void ProcessScheduleTasks(string fullPath)
         {
             LoadScheduleTasks();
@@ -167,8 +175,18 @@ namespace DataReceiver
                 if(t == now)
                 {
                     Log.Info("执行任务:{0} {1} {2}", it.Item1, it.Item2, it.Item3);
-                    var proc = Process.Start(it.Item2, it.Item3);
-                    //proc.WaitForExit();
+                    if (it.Item2.ToLower().EndsWith(".exe"))
+                    {
+                        var proc = Process.Start(it.Item2, it.Item3);
+                        //proc.WaitForExit();
+                    }
+                    else
+                    {
+                        // 执行指定方法
+                        MethodInfo mi = this.GetType().GetMethod(it.Item2);
+                        mi.Invoke(this, new object[] {});
+                    }
+                    
                     break;
                 }
             }

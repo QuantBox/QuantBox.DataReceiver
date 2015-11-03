@@ -59,7 +59,7 @@ namespace DataReceiver
             dataReceiver.Connect();
 
             // 由于会建立多个，所以超时时间可以长一些
-            if (dataReceiver.WaitConnectd(20 * 1000))
+            if (dataReceiver.WaitConnectd(30 * 1000))
             {
                 dataReceiver.WatcherStrat(dataReceiver.ConfigPath, "*.json");
                 // 复制老列表
