@@ -31,7 +31,8 @@ namespace DataReceiver
         public const string KEY_IncludeFilterListFileName = "IncludeFilterListFileName";
         public const string KEY_ExcludeFilterListFileName = "ExcludeFilterListFileName";
 
-        public const string KEY_SaveAsInstrumentInfoListFileName = @"SaveAsInstrumentInfoListFileName";
+        public const string KEY_SaveAsFilteredInstrumentInfoListFileName = @"SaveAsFilteredInstrumentInfoListFileName";
+        public const string KEY_SaveAsSubscribedInstrumentInfoListFileName = @"SaveAsSubscribedInstrumentInfoListFileName";
         public const string KEY_SaveAsTradingDayFileName = @"SaveAsTradingDayFileName";
 
         public const string KEY_ScheduleTasksListFileName = "ScheduleTasksListFileName";
@@ -49,8 +50,9 @@ namespace DataReceiver
             dataReceiver.InstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_InstrumentInfoListFileName];
             dataReceiver.IncludeFilterListFileName = ConfigurationManager.AppSettings[KEY_IncludeFilterListFileName];
             dataReceiver.ExcludeFilterListFileName = ConfigurationManager.AppSettings[KEY_ExcludeFilterListFileName];
-            
-            dataReceiver.SaveAsInstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_SaveAsInstrumentInfoListFileName];
+
+            dataReceiver.SaveAsFilteredInstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_SaveAsFilteredInstrumentInfoListFileName];
+            dataReceiver.SaveAsSubscribedInstrumentInfoListFileName = ConfigurationManager.AppSettings[KEY_SaveAsSubscribedInstrumentInfoListFileName];
             dataReceiver.SaveAsTradingDayFileName = ConfigurationManager.AppSettings[KEY_SaveAsTradingDayFileName];
 
             dataReceiver.ScheduleTasksListFileName = ConfigurationManager.AppSettings[KEY_ScheduleTasksListFileName];

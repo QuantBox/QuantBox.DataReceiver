@@ -31,7 +31,9 @@ namespace DataReceiver
         public string IncludeFilterListFileName = @"IncludeFilterList.json";
         public string ExcludeFilterListFileName = @"ExcludeFilterList.json";
 
-        public string SaveAsInstrumentInfoListFileName = @"InstrumentInfoList.json";
+        public string SaveAsFilteredInstrumentInfoListFileName = @"FilteredInstrumentInfoList.json";
+        public string SaveAsSubscribedInstrumentInfoListFileName = @"SubscribedInstrumentInfoList.json";
+
         public string SaveAsTradingDayFileName = @"TradingDay.json";
 
         public string ScheduleTasksListFileName = @"ScheduleTasks.json";
@@ -133,6 +135,7 @@ namespace DataReceiver
             SaveAsInstrumentInfoList();
         }
 
+        // 可用于定时订阅
         public void ReSubscribe()
         {
             Log.Info("重新订阅:{0}", InstrumentInfoList.Count());
@@ -209,11 +212,11 @@ namespace DataReceiver
         }
 
         /// <summary>
-        /// 这里保存的是过滤后的合约列表，也就是正在订阅的合约列表,保存在其它地方可供用户下载或检测
+        /// 这里保存的是过滤后的合约列表，这不是订阅成功的列表
         /// </summary>
         public void SaveAsInstrumentInfoList()
         {
-            Save(DataPath, SaveAsInstrumentInfoListFileName, InstrumentInfoList);
+            Save(DataPath, SaveAsFilteredInstrumentInfoListFileName, InstrumentInfoList);
         }
 
         public void SaveAsTradingDay()
@@ -288,6 +291,15 @@ namespace DataReceiver
             }
         }
 
+        // 可用来定时断开连接
+        //public void Disconnect()
+        //{
+        //    foreach(var api in XApiList)
+        //    {
+        //        api.Disconnect();
+        //    }
+        //}
+
         public bool Contains(string szInstrument, string szExchange)
         {
             foreach (var api in XApiList)
@@ -354,6 +366,8 @@ namespace DataReceiver
         /// <param name="list"></param>
         public int Subscribe(IEnumerable<InstrumentInfo> list)
         {
+            List<InstrumentInfo> SubscribedInstrumentInfoList = new List<InstrumentInfo>();
+
             int x = 0;
             foreach (var i in list)
             {
@@ -369,6 +383,7 @@ namespace DataReceiver
                         api.Subscribe(i.Instrument, i.Exchange);
                         api.Log.Debug("尝试订阅:{0}.{1}", i.Instrument, i.Exchange);
                         bSubscribe = true;
+                        SubscribedInstrumentInfoList.Add(i);
                         break;
                     }
                 }
@@ -379,6 +394,10 @@ namespace DataReceiver
                     ++x;
                 }
             }
+
+            // 记录实际订阅的合约
+            Save(DataPath, SaveAsSubscribedInstrumentInfoListFileName, SubscribedInstrumentInfoList);
+
             return x;
         }
 
