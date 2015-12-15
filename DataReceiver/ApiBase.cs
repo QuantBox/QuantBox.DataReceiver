@@ -131,7 +131,7 @@ namespace DataReceiver
         {
             if (size1 > 0)
             {
-                if (userLogin.ErrorID != 0)
+                if (userLogin.RawErrorID != 0)
                 {
                     (sender as XApi).Log.Info("{0}:{1}", status, userLogin.ToFormattedStringShort());
                 }

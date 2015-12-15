@@ -66,7 +66,8 @@ namespace GetInstruments
 
             foreach (var api in XApiList)
             {
-                api.ReqQryInstrument("", "");
+                ReqQueryField query = default(ReqQueryField);
+                api.ReqQuery(QueryType.ReqQryInstrument, ref query);
             }
         }
 
