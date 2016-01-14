@@ -4,9 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using QuantBox.XAPI;
-using QuantBox.XAPI.Callback;
-using QuantBox;
+using XAPI;
+using XAPI.Callback;
 using QuantBox.Data.Serializer.V2;
 using System.IO;
 using Newtonsoft.Json;

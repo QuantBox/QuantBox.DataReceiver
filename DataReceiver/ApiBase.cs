@@ -1,7 +1,4 @@
 ﻿using Newtonsoft.Json;
-using QuantBox;
-using QuantBox.XAPI;
-using QuantBox.XAPI.Callback;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using XAPI;
+using XAPI.Callback;
 
 namespace DataReceiver
 {

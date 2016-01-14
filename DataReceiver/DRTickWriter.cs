@@ -1,12 +1,11 @@
 ﻿using Ideafixxxer.Generics;
-using QuantBox;
 using QuantBox.Data.Serializer.V2;
-using QuantBox.XAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XAPI;
 
 namespace DataReceiver
 {

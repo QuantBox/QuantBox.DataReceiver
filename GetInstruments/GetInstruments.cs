@@ -1,8 +1,7 @@
 ﻿using DataReceiver;
 using NLog;
-using QuantBox;
-using QuantBox.XAPI;
-using QuantBox.XAPI.Callback;
+using XAPI;
+using XAPI.Callback;
 using System;
 using System.Collections.Generic;
 using System.Linq;

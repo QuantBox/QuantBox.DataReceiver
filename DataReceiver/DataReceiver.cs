@@ -1,9 +1,6 @@
 ﻿using FileMonitor;
 using Newtonsoft.Json;
 using NLog;
-using QuantBox;
-using QuantBox.XAPI;
-using QuantBox.XAPI.Callback;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,6 +12,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using XAPI;
+using XAPI.Callback;
 
 namespace DataReceiver
 {
