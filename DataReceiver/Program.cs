@@ -22,6 +22,7 @@ namespace DataReceiver
     /// </summary>
     class Program
     {
+        public const string KEY_OutputFormat = "OutputFormat";
         public const string KEY_DataPath = "DataPath";
         public const string KEY_ConfigPath = "ConfigPath";
 
@@ -38,11 +39,14 @@ namespace DataReceiver
 
         static void Main(string[] args)
         {
-            DRTickWriter TickWriter = new DRTickWriter(ConfigurationManager.AppSettings[KEY_DataPath]);
+            DRTickWriter TickWriter = new DRTickWriter(
+                ConfigurationManager.AppSettings[KEY_DataPath],
+                ConfigurationManager.AppSettings[KEY_OutputFormat]
+                );
 
             DataReceiver dataReceiver = new DataReceiver();
             dataReceiver.TickWriter = TickWriter;
-
+            
             dataReceiver.ConfigPath = ConfigurationManager.AppSettings[KEY_ConfigPath];
             dataReceiver.DataPath = ConfigurationManager.AppSettings[KEY_DataPath];
             dataReceiver.ConnectionConfigListFileName = ConfigurationManager.AppSettings[KEY_ConnectionConfigListFileName];

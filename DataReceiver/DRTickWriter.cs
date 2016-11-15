@@ -9,11 +9,19 @@ using XAPI;
 
 namespace DataReceiver
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class DRTickWriter:TickWriter
     {
-        public DRTickWriter(string path):base(path)
-        {
+        public string OutputFormat;
+        public bool IsHdf5;
 
+        public DRTickWriter(string path, string outputFormat):base(path)
+        {
+            OutputFormat = outputFormat;
+
+            IsHdf5 = string.Compare(OutputFormat, "pd0", true) != 0;
         }
         
         // 目前先不处理港股的tickSize变化的那种行情
@@ -92,14 +100,22 @@ namespace DataReceiver
 
         public bool Write(ref DepthMarketDataNClass pDepthMarketData)
         {
-            QuantBox.Data.Serializer.V2.TickWriter.WriterDataItem item;
-            if (Items.TryGetValue(pDepthMarketData.Symbol, out item))
+            if(IsHdf5)
             {
-                item.Tick = CreateTick(ref pDepthMarketData, item.Serializer.Codec);
-                base.Write(item, item.Tick);
+                // 输出
                 return true;
             }
-            return false;
+            else
+            {
+                QuantBox.Data.Serializer.V2.TickWriter.WriterDataItem item;
+                if (Items.TryGetValue(pDepthMarketData.Symbol, out item))
+                {
+                    item.Tick = CreateTick(ref pDepthMarketData, item.Serializer.Codec);
+                    base.Write(item, item.Tick);
+                    return true;
+                }
+                return false;
+            }
         }
     }
 }
