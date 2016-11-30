@@ -8,6 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using XAPI;
 using XAPI.Callback;
+using System.Runtime.Serialization.Json;
+using System.Runtime.Serialization;
 
 namespace DataReceiver
 {
@@ -60,6 +62,29 @@ namespace DataReceiver
             }
             catch
             {
+            }
+            return obj;
+        }
+
+        protected object Load2(string path, string file, object obj)
+        {
+            try
+            {
+                object ret;
+                using (FileStream fs = File.Open(Path.Combine(path, file), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    // 虽然是内置的，但因为DateTime转换不是想要的，所以弃用
+                    var serializer = new DataContractJsonSerializer(obj.GetType(), new DataContractJsonSerializerSettings() {
+                        DateTimeFormat = new DateTimeFormat("HH:MM:ss")
+                    });
+                    ret = serializer.ReadObject(fs);
+                }
+
+                return ret;
+            }
+            catch(Exception ex)
+            {
+                int i = 1;
             }
             return obj;
         }
@@ -132,16 +157,16 @@ namespace DataReceiver
             {
                 if (userLogin.RawErrorID != 0)
                 {
-                    (sender as XApi).Log.Info("{0}:{1}", status, userLogin.ToFormattedStringShort());
+                    (sender as XApi).GetLog().Info("{0}:{1}", status, userLogin.ToFormattedStringShort());
                 }
                 else
                 {
-                    (sender as XApi).Log.Info("{0}:{1}", status, userLogin.ToFormattedStringLong());
+                    (sender as XApi).GetLog().Info("{0}:{1}", status, userLogin.ToFormattedStringLong());
                 }
             }
             else
             {
-                (sender as XApi).Log.Info("{0}", status);
+                (sender as XApi).GetLog().Info("{0}", status);
             }
             if (status == ConnectionStatus.Logined)
             {

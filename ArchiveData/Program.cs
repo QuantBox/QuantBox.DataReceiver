@@ -1,4 +1,6 @@
 ﻿using NLog;
+using QuantBox.Data.Serializer.V2;
+using SevenZip;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -19,31 +21,46 @@ namespace ArchiveData
         public const string KEY_DefaultExchange = "DefaultExchange";
         public const string KEY_SevenZipExePath = "SevenZipExePath";
 
+        public const string KEY_HDF5_TradingDay = "HDF5_TradingDay";
+
         public const string KEY_Clear_DataPath = "Clear_DataPath";
         public const string KEY_Clear_OutputPath_TradingDay = "Clear_OutputPath_TradingDay";
+
+
+        static void HDF5_Convert(string target, string directory, Logger Log)
+        {
+            var dr = new Pd0DataReader();
+            var files = new DirectoryInfo(directory).GetFiles("*", SearchOption.AllDirectories);
+
+            int i = 0;
+
+            var h5 = new H5DataWriter();
+            h5.Open(target);
+            foreach (var f in files)
+            {
+                var list = dr.ReadOneFile(f);
+                string dataset_name = f.Name;
+                string extension = f.Extension;
+                if(!string.IsNullOrEmpty(extension))
+                    dataset_name = dataset_name.Replace(extension, "");
+                Log.Info("开始写入表：{0}",dataset_name);
+                h5.Writer(list, dataset_name);
+
+                //if (i > 5)
+                //    break;
+                ++i;
+            }
+            h5.Close();
+        }
 
         static void Main(string[] args)
         {
             CommandArgs commandArgs = CommandLine.Parse(args);
 
-            //// output all the argument pairs 
-            //Console.WriteLine("Command Line Arguments:");
-            //foreach (KeyValuePair<string, string> pair in commandArgs.ArgPairs)
-            //{
-            //    Console.WriteLine(string.Format(" {0} = {1}", pair.Key, pair.Value));
-            //}
-
-            //// output all the parameters 
-            //Console.WriteLine("\nCommand Line Parameters:");
-            //foreach (string param in commandArgs.Params)
-            //{
-            //    Console.WriteLine(" " + param);
-            //}
-
-            //return;
-
             // 遍历，某个目录
             Logger Log = LogManager.GetCurrentClassLogger();
+            //HDF5_Convert(@"D:\test.h5", @"D:\Users\Kan\Documents\GitHub\QuantBox.DataReceiver\bin\Debug\IF1509", Log);
+            //return;
 
             string DataPath = ConfigurationManager.AppSettings[KEY_DataPath];
             string OutputPath_TradingDay = ConfigurationManager.AppSettings[KEY_OutputPath_TradingDay];
@@ -53,8 +70,12 @@ namespace ArchiveData
             bool Clear_DataPath = bool.Parse(commandArgs.ArgPairs.ContainsKey(KEY_Clear_DataPath) ? commandArgs.ArgPairs[KEY_Clear_DataPath] : ConfigurationManager.AppSettings[KEY_Clear_DataPath]);
             bool Clear_OutputPath_TradingDay = bool.Parse(commandArgs.ArgPairs.ContainsKey(KEY_Clear_OutputPath_TradingDay) ? commandArgs.ArgPairs[KEY_Clear_OutputPath_TradingDay] : ConfigurationManager.AppSettings[KEY_Clear_OutputPath_TradingDay]);
 
+            //string HDF5_TradingDay = ConfigurationManager.AppSettings[KEY_HDF5_TradingDay];
+
+
             HashSet<string> Set_TradingDay = new HashSet<string>();
 
+            // 遍历源数据目录下的所有文件
             var files = new DirectoryInfo(DataPath).GetFiles("*", SearchOption.AllDirectories);
             foreach (var f in files)
             {
@@ -63,6 +84,8 @@ namespace ArchiveData
                 string instrument = string.Empty;
                 string symbol = string.Empty;
                 string date = string.Empty;
+                
+                // 解析文件名
                 if (PathHelper.SplitFileName(f.Name, out exchange, out product, out instrument, out date))
                 {
                     if (string.IsNullOrEmpty(exchange))
@@ -112,6 +135,9 @@ namespace ArchiveData
             {
                 Log.Info("压缩交易日目录:{0}", d);
                 PathHelper.SevenZipDirectory(SevenZipExePath, d + ".7z", d);
+
+                Log.Info("转换交易日目录:{0}", d);
+                HDF5_Convert(d + ".h5", d, Log);
             }
 
             // 删除

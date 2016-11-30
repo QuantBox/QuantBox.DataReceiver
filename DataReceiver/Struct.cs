@@ -5,33 +5,41 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using XAPI;
+using System.Runtime.Serialization.Json;
+using System.Runtime.Serialization;
 
 namespace DataReceiver
 {
     // <summary>
     /// 连接配置信息
     /// </summary>
+    [DataContract]
     public class ConnectionConfig
     {
         /// <summary>
         /// dll地址
         /// </summary>
+        [DataMember(Order = 0)]
         public string LibPath;
         /// <summary>
         /// 服务器
         /// </summary>
+        [DataMember(Order = 1)]
         public ServerInfoField Server;
         /// <summary>
         /// 账号
         /// </summary>
+        [DataMember(Order = 2)]
         public UserInfoField User;
         /// <summary>
         /// 同一服务器和账号最大可登录会话数
         /// </summary>
+        [DataMember(Order = 3)]
         public int SessionLimit;
         /// <summary>
         /// 每个会话最大可订阅数
         /// </summary>
+        [DataMember(Order = 4)]
         public int SubscribePerSession;
     }
 
@@ -75,5 +83,19 @@ namespace DataReceiver
         /// 只是为了节省文件大小
         /// </summary>
         public int Time_ssf_Diff;
+    }
+
+    /// <summary>
+    /// 本来是用的tuple，但没办法用微软内置的转成json，只好自己定义一个
+    /// </summary>
+    [DataContract]
+    public class ScheduleTaskConfig
+    {
+        [DataMember(Order = 0)]
+        public TimeSpan Item1;
+        [DataMember(Order = 1)]
+        public string Item2;
+        [DataMember(Order = 2)]
+        public string Item3;
     }
 }

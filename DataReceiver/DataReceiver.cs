@@ -24,7 +24,7 @@ namespace DataReceiver
         public List<ConnectionConfig> ConnectionConfigList;
         public List<InstrumentFilterConfig> IncludeFilterList;
         public List<InstrumentFilterConfig> ExcludeFilterList;
-        public List<Tuple<TimeSpan, string, string>> ScheduleTasksList;
+        public List<ScheduleTaskConfig> ScheduleTasksList;
 
         public string ConnectionConfigListFileName = @"ConnectionConfigList.json";
         public string IncludeFilterListFileName = @"IncludeFilterList.json";
@@ -253,11 +253,11 @@ namespace DataReceiver
 
         public void LoadScheduleTasks()
         {
-            ScheduleTasksList = new List<Tuple<TimeSpan, string, string>>();
+            ScheduleTasksList = new List<ScheduleTaskConfig>();
 
-            ScheduleTasksList = (List<Tuple<TimeSpan, string, string>>)Load(ConfigPath, ScheduleTasksListFileName, ScheduleTasksList);
+            ScheduleTasksList = (List<ScheduleTaskConfig>)Load(ConfigPath, ScheduleTasksListFileName, ScheduleTasksList);
             if (ScheduleTasksList == null)
-                ScheduleTasksList = new List<Tuple<TimeSpan, string, string>>();
+                ScheduleTasksList = new List<ScheduleTaskConfig>();
 
             Log.Info("加载计划任务数:{0}", ScheduleTasksList.Count);
         }
@@ -380,7 +380,7 @@ namespace DataReceiver
                     if (api.SubscribedInstrumentsCount < api.MaxSubscribedInstrumentsCount)
                     {
                         api.Subscribe(i.Instrument, i.Exchange);
-                        api.Log.Debug("尝试订阅:{0}.{1}", i.Instrument, i.Exchange);
+                        api.GetLog().Debug("尝试订阅:{0}.{1}", i.Instrument, i.Exchange);
                         bSubscribe = true;
                         SubscribedInstrumentInfoList.Add(i);
                         break;
@@ -415,7 +415,7 @@ namespace DataReceiver
                     if (api.SubscribedInstrumentsContains(i.Instrument, i.Exchange))
                     {
                         api.Unsubscribe(i.Instrument, i.Exchange);
-                        api.Log.Debug("取消订阅:{0}.{1}", i.Instrument, i.Exchange);
+                        api.GetLog().Debug("取消订阅:{0}.{1}", i.Instrument, i.Exchange);
                     }
                 }
             }

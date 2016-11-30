@@ -100,12 +100,12 @@ namespace DataReceiver
 
         public bool Write(ref DepthMarketDataNClass pDepthMarketData)
         {
-            if(IsHdf5)
-            {
-                // 输出
-                return true;
-            }
-            else
+            //if(IsHdf5)
+            //{
+            //    // 输出
+            //    return true;
+            //}
+            //else
             {
                 QuantBox.Data.Serializer.V2.TickWriter.WriterDataItem item;
                 if (Items.TryGetValue(pDepthMarketData.Symbol, out item))

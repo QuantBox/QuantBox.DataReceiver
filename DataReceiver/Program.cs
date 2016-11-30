@@ -59,7 +59,7 @@ namespace DataReceiver
             dataReceiver.SaveAsTradingDayFileName = ConfigurationManager.AppSettings[KEY_SaveAsTradingDayFileName];
 
             dataReceiver.ScheduleTasksListFileName = ConfigurationManager.AppSettings[KEY_ScheduleTasksListFileName];
-
+            
             dataReceiver.LoadConnectionConfig();
             dataReceiver.Connect();
 
