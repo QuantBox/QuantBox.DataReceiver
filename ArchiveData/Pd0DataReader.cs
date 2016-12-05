@@ -29,7 +29,16 @@ namespace ArchiveData
                 catch (Exception ex)
                 {
                     _stream = fileStream;
-                    _stream.Seek(0, SeekOrigin.Begin);
+                    try
+                    {
+                        // 有部分文件会出现zip的密码错误，然后把流关闭了，所以需要重新打开一次
+                        // 如果是写部分不会出问题，读的部分可能出问题
+                        _stream.Seek(0, SeekOrigin.Begin);
+                    }
+                    catch(Exception ex2)
+                    {
+                        _stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    }
                 }
             }
             return Serializer.Read2View(_stream);
