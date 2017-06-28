@@ -14,12 +14,14 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using XAPI;
 using XAPI.Callback;
+using Tom.Kdb;
 
 namespace DataReceiver
 {
     public class DataReceiver:ApiBase
     {
         public DRTickWriter TickWriter;
+        public KdbWriter KdbWriter;
 
         public List<ConnectionConfig> ConnectionConfigList;
         public List<InstrumentFilterConfig> IncludeFilterList;
@@ -264,6 +266,11 @@ namespace DataReceiver
 
         public void Connect()
         {
+            if (null != KdbWriter)
+            {
+                KdbWriter.Connect();
+            }
+            
             // 查看有多少种连接
             int j = 0;
             foreach (var cc in ConnectionConfigList)
@@ -291,13 +298,21 @@ namespace DataReceiver
         }
 
         // 可用来定时断开连接
-        //public void Disconnect()
-        //{
-        //    foreach(var api in XApiList)
-        //    {
-        //        api.Disconnect();
-        //    }
-        //}
+        public override void Disconnect()
+        {
+            base.Disconnect();
+            if (null == KdbWriter)
+                return;
+            KdbWriter.Disconnect();
+        }
+
+        // 可用来定时保存数据
+        public void SaveData()
+        {
+            if (null == KdbWriter)
+                return;
+            KdbWriter.Save();
+        }
 
         public bool Contains(string szInstrument, string szExchange)
         {
@@ -442,6 +457,9 @@ namespace DataReceiver
         public void OnInputMarketData(DepthMarketDataNClass pDepthMarketData)
         {
             TickWriter.Write(ref pDepthMarketData);
+            if (null == KdbWriter)
+                return;
+            KdbWriter.Write(ref pDepthMarketData);
         }
 
         protected override void OnConnectionStatus(object sender, ConnectionStatus status, ref RspUserLoginField userLogin, int size1)

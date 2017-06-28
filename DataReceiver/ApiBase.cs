@@ -89,7 +89,7 @@ namespace DataReceiver
             return obj;
         }
 
-        public void Disconnect()
+        public virtual void Disconnect()
         {
             foreach (var api in XApiList)
             {

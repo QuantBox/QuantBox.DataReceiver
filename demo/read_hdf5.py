@@ -21,7 +21,7 @@ df2 = pd.DataFrame(ds)
 df2.dtypes
 
 ################
-# 时间处理,可看情况是澡加入毫秒
+# 时间处理,可看情况是否加入毫秒
 import numpy as np
 df2['datetime'] = df2['ActionDay'].astype(np.int64)*1000000+df2['UpdateTime']
 

@@ -37,6 +37,13 @@ namespace DataReceiver
 
         public const string KEY_ScheduleTasksListFileName = "ScheduleTasksListFileName";
 
+        public const string KEY_Kdb_Enable = "Kdb_Enable";
+        public const string KEY_Kdb_DataPath = "Kdb_DataPath";
+        public const string KEY_Kdb_Host = "Kdb_Host";
+        public const string KEY_Kdb_Port = "Kdb_Port";
+        public const string KEY_Kdb_UsernameAndPassword = "Kdb_UsernameAndPassword";
+        public const string KEY_Kdb_Save_Quote = "Kdb_Save_Quote";
+
         static void Main(string[] args)
         {
             DRTickWriter TickWriter = new DRTickWriter(
@@ -44,9 +51,23 @@ namespace DataReceiver
                 ConfigurationManager.AppSettings[KEY_OutputFormat]
                 );
 
+            Tom.Kdb.KdbWriter KdbWriter = new Tom.Kdb.KdbWriter(
+                ConfigurationManager.AppSettings[KEY_Kdb_Host],
+                ConfigurationManager.AppSettings[KEY_Kdb_Port],
+                ConfigurationManager.AppSettings[KEY_Kdb_UsernameAndPassword],
+                ConfigurationManager.AppSettings[KEY_Kdb_DataPath],
+                ConfigurationManager.AppSettings[KEY_Kdb_Save_Quote]
+                );
+
             DataReceiver dataReceiver = new DataReceiver();
             dataReceiver.TickWriter = TickWriter;
+            if(bool.Parse(ConfigurationManager.AppSettings[KEY_Kdb_Enable]))
+            {
+                dataReceiver.KdbWriter = KdbWriter;
+            }
             
+
+
             dataReceiver.ConfigPath = ConfigurationManager.AppSettings[KEY_ConfigPath];
             dataReceiver.DataPath = ConfigurationManager.AppSettings[KEY_DataPath];
             dataReceiver.ConnectionConfigListFileName = ConfigurationManager.AppSettings[KEY_ConnectionConfigListFileName];
