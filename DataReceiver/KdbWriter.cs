@@ -43,12 +43,12 @@ namespace Tom.Kdb
                 else
                     c = new c(Host, Port, UsernameAndPassword);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Log.Error(e.Message);
                 return;
             }
-            
+
             Log.Info("连接kdb+成功：{0}:{1}", Host, Port);
 
             try
@@ -71,12 +71,12 @@ namespace Tom.Kdb
                     object result1 = c.k(string.Format(@"load `:{0}/{1}", Path, "trade"));
                     object result2 = c.k(string.Format(@"load `:{0}/{1}", Path, "quote"));
                 }
-                catch(Exception e1)
+                catch (Exception e1)
                 {
 
                 }
             }
-            
+
 
             try
             {
@@ -92,7 +92,7 @@ namespace Tom.Kdb
             catch (Exception e)
             {
                 // 加载也是失败的，只能创建了
-                c.ks(@"trade:([]datetime:`datetime$();sym:`symbol$();price:`float$();volume:`long$())");
+                c.ks(@"trade:([]datetime:`datetime$();sym:`symbol$();price:`float$();volume:`long$();openint:`long$())");
                 c.ks(@"quote:([]datetime:`datetime$();sym:`symbol$();bid:`float$();ask:`float$();bsize:`int$();asize:`int$())");
                 Log.Info("创建trade/quote两张表完成");
             }
@@ -100,7 +100,7 @@ namespace Tom.Kdb
 
         public void Save()
         {
-            lock(this)
+            lock (this)
             {
                 try
                 {
@@ -140,13 +140,14 @@ namespace Tom.Kdb
             string symbol = pDepthMarketData.InstrumentID;
             double price = pDepthMarketData.LastPrice;
             long volume = (long)(pDepthMarketData.Volume);
-            
+            long openint = (long)pDepthMarketData.OpenInterest;
+
             double bid = 0;
             double ask = 0;
             int bsize = 0;
             int asize = 0;
 
-            string trade_str = string.Format("`trade insert({0};`$\"{1}\";{2}f;{3}j)", dateTime, symbol, price, volume);
+            string trade_str = string.Format("`trade insert({0};`$\"{1}\";{2}f;{3}j;{4}j)", dateTime, symbol, price, volume, openint);
             string quote_str = null;
 
             if (SaveQuote)
@@ -178,7 +179,7 @@ namespace Tom.Kdb
                         c.ks(quote_str);
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     // 保存失败，通常时因为
                     Log.Error(e.Message);
