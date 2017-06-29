@@ -18,7 +18,7 @@ using Tom.Kdb;
 
 namespace DataReceiver
 {
-    public class DataReceiver:ApiBase
+    public class DataReceiver : ApiBase
     {
         public DRTickWriter TickWriter;
         public KdbWriter KdbWriter;
@@ -63,7 +63,7 @@ namespace DataReceiver
                 watcher.Deleted += new FileSystemEventHandler(timer.OnFileChanged);
                 watcher.EnableRaisingEvents = true;
 
-                tuple = new Tuple<FileSystemWatcher, WatcherTimer>(watcher,timer);
+                tuple = new Tuple<FileSystemWatcher, WatcherTimer>(watcher, timer);
             }
             watchers[key] = tuple;
         }
@@ -85,7 +85,7 @@ namespace DataReceiver
         private void OnReload(object source, FileSystemEventArgs e)
         {
             // 只关注这三个文件的变化
-            if(e.FullPath.EndsWith(InstrumentInfoListFileName)
+            if (e.FullPath.EndsWith(InstrumentInfoListFileName)
                 || e.FullPath.EndsWith(IncludeFilterListFileName)
                 || e.FullPath.EndsWith(ExcludeFilterListFileName)
                 )
@@ -121,7 +121,7 @@ namespace DataReceiver
 
             IEnumerable<InstrumentInfo> _have = newList.Intersect(oldList);
             // 对于已经订阅的，有可能合约最小变动价位变化，所以可能需要重新更新
-            foreach(var h in _have)
+            foreach (var h in _have)
             {
                 AddInstrument(h);
             }
@@ -162,40 +162,50 @@ namespace DataReceiver
 
         void _Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            _Timer.Enabled = false;
-
-            int now = e.SignalTime.Hour*100+e.SignalTime.Minute;
-            if (CheckedTime == now)
+            lock(this)
             {
-                _Timer.Enabled = true;
-                return;
-            }
-            CheckedTime = now;
+                _Timer.Enabled = false;
 
-            foreach(var it in ScheduleTasksList)
-            {
-                DateTime dt = e.SignalTime.Date.Add(it.Item1);
-                int t = dt.Hour*100+dt.Minute;
-                if(t == now)
+                int now = e.SignalTime.Hour * 100 + e.SignalTime.Minute;
+                if (CheckedTime == now)
                 {
-                    Log.Info("执行任务:{0} {1} {2}", it.Item1, it.Item2, it.Item3);
-                    if (it.Item2.ToLower().EndsWith(".exe"))
-                    {
-                        var proc = Process.Start(it.Item2, it.Item3);
-                        //proc.WaitForExit();
-                    }
-                    else
-                    {
-                        // 执行指定方法
-                        MethodInfo mi = this.GetType().GetMethod(it.Item2);
-                        mi.Invoke(this, new object[] {});
-                    }
-                    
-                    break;
+                    _Timer.Enabled = true;
+                    return;
                 }
-            }
+                CheckedTime = now;
 
-            _Timer.Enabled = true;
+                foreach (var it in ScheduleTasksList)
+                {
+                    try
+                    {
+                        DateTime dt = e.SignalTime.Date.Add(it.Item1);
+                        int t = dt.Hour * 100 + dt.Minute;
+                        if (t == now)
+                        {
+                            Log.Info("执行任务:{0} {1} {2}", it.Item1, it.Item2, it.Item3);
+                            if (it.Item2.ToLower().EndsWith(".exe"))
+                            {
+                                var proc = Process.Start(it.Item2, it.Item3);
+                                //proc.WaitForExit();
+                            }
+                            else
+                            {
+                                // 执行指定方法
+                                MethodInfo mi = this.GetType().GetMethod(it.Item2);
+                                mi.Invoke(this, new object[] { });
+                            }
+
+                            break;
+                        }
+                    }
+                    catch(Exception e1)
+                    {
+                        Log.Error(e1.Message);
+                    }
+                }
+
+                _Timer.Enabled = true;
+            }
         }
         #endregion
 
@@ -269,13 +279,15 @@ namespace DataReceiver
             if (null != KdbWriter)
             {
                 KdbWriter.Connect();
+                // 连接成功 保存一次 kdb 数据
+                SaveKdbData();
             }
-            
+
             // 查看有多少种连接
             int j = 0;
             foreach (var cc in ConnectionConfigList)
             {
-                
+
                 // 建立多个连接
                 for (int i = 0; i < cc.SessionLimit; ++i)
                 {
@@ -283,7 +295,7 @@ namespace DataReceiver
                     api.Server = cc.Server;
                     api.User = cc.User;
                     api.Log = LogManager.GetLogger(string.Format("{0}.{1}.{2}.{3}", api.Server.BrokerID, api.User.UserID, j, i));
-            
+
                     api.MaxSubscribedInstrumentsCount = cc.SubscribePerSession;
 
                     api.OnConnectionStatus = OnConnectionStatus;
@@ -303,22 +315,25 @@ namespace DataReceiver
             base.Disconnect();
             if (null == KdbWriter)
                 return;
+            // 断开连接前，保存一次数据
+            SaveKdbData();
             KdbWriter.Disconnect();
         }
 
         // 可用来定时保存数据
-        public void SaveData()
+        // 如何确保 15:30 后存一次盘 ？
+        public void SaveKdbData()
         {
             if (null == KdbWriter)
                 return;
-            KdbWriter.Save();
+            KdbWriter.Save(DateTime.Now);
         }
 
         public bool Contains(string szInstrument, string szExchange)
         {
             foreach (var api in XApiList)
             {
-                if (api.SubscribedInstrumentsContains(szInstrument,szExchange))
+                if (api.SubscribedInstrumentsContains(szInstrument, szExchange))
                 {
                     return true;
                 }
@@ -402,7 +417,7 @@ namespace DataReceiver
                     }
                 }
 
-                if(!bSubscribe)
+                if (!bSubscribe)
                 {
                     Log.Info("超过每个连接数可订数量，{0}.{1}", i.Instrument, i.Exchange);
                     ++x;
@@ -421,7 +436,7 @@ namespace DataReceiver
         /// <param name="list"></param>
         public void Unsubscribe(IEnumerable<InstrumentInfo> list)
         {
-            foreach(var i in list)
+            foreach (var i in list)
             {
                 RemoveInstrument(i);
 
@@ -438,7 +453,7 @@ namespace DataReceiver
 
         private InstrumentFilterConfig Match(string symbol, List<InstrumentFilterConfig> list)
         {
-            foreach(var l in list)
+            foreach (var l in list)
             {
                 Regex regex = new Regex(l.SymbolRegex);
                 if (regex.Match(symbol).Success)
