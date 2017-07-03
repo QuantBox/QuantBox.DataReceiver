@@ -87,8 +87,12 @@ namespace DataReceiver
             // 由于会建立多个，所以超时时间可以长一些
             if (dataReceiver.WaitConnectd(30 * 1000))
             {
+                // 可以在这里加入一些订阅前的准备工作
+                // 这里已经登录成功了，并获得了交易日时间，所以可以用来做别的工作
+                dataReceiver.BeforeSubscribe();
+
                 dataReceiver.WatcherStrat(dataReceiver.ConfigPath, "*.json");
-                // 复制老列表
+                // 监控配置文件
                 dataReceiver.ProcessConfig(null);
                 dataReceiver.ProcessScheduleTasks(null);
                 Console.WriteLine("开始接收，按Ctrl+Q退出");

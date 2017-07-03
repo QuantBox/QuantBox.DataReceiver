@@ -144,6 +144,16 @@ namespace DataReceiver
             Subscribe(InstrumentInfoList);
         }
 
+        public void BeforeSubscribe()
+        {
+            if (null != KdbWriter)
+            {
+                KdbWriter.SetTradingDay(TradingDay);
+                KdbWriter.Connect();
+                KdbWriter.Save(TradingDay);
+            }
+        }
+
         public void ProcessScheduleTasks(string fullPath)
         {
             LoadScheduleTasks();
@@ -276,18 +286,10 @@ namespace DataReceiver
 
         public void Connect()
         {
-            if (null != KdbWriter)
-            {
-                KdbWriter.Connect();
-                // 连接成功 保存一次 kdb 数据
-                SaveKdbData();
-            }
-
             // 查看有多少种连接
             int j = 0;
             foreach (var cc in ConnectionConfigList)
             {
-
                 // 建立多个连接
                 for (int i = 0; i < cc.SessionLimit; ++i)
                 {
@@ -315,18 +317,18 @@ namespace DataReceiver
             base.Disconnect();
             if (null == KdbWriter)
                 return;
-            // 断开连接前，保存一次数据
-            SaveKdbData();
+
             KdbWriter.Disconnect();
         }
 
-        // 可用来定时保存数据
-        // 如何确保 15:30 后存一次盘 ？
+        // 可用来定时保存数据,由脚本来触发
+        // 就算连接已经断开，但在再时重新登录前，因为没法获得新的数据，还会是用老的交易日
         public void SaveKdbData()
         {
             if (null == KdbWriter)
                 return;
-            KdbWriter.Save(DateTime.Now);
+
+            KdbWriter.Save(TradingDay);
         }
 
         public bool Contains(string szInstrument, string szExchange)
@@ -480,10 +482,26 @@ namespace DataReceiver
         protected override void OnConnectionStatus(object sender, ConnectionStatus status, ref RspUserLoginField userLogin, int size1)
         {
             base.OnConnectionStatus(sender, status, ref userLogin, size1);
+
+            // 由于配置中肯定会设置多个行情连接，所有
             if (status == ConnectionStatus.Logined)
             {
                 TradingDay = userLogin.TradingDay;
                 SaveAsTradingDay();
+
+                // 
+                if (null != KdbWriter)
+                {
+                    KdbWriter.SetTradingDay(TradingDay);
+                }
+            }
+            else if(status == ConnectionStatus.Disconnected)
+            {
+                // 断开连接，可加入一接断开连接时的保存指令，由于连接数多，可能会多次保存
+                if (null != KdbWriter)
+                {
+                    KdbWriter.Save(TradingDay);
+                }
             }
         }
     }
