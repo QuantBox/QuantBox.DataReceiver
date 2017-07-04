@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using System.Configuration;
 using NLog;
+using System.Runtime.InteropServices;
 
 namespace DataReceiver
 {
@@ -22,6 +23,19 @@ namespace DataReceiver
     /// </summary>
     class Program
     {
+        private const int MF_BYCOMMAND = 0x00000000;
+        public const int SC_CLOSE = 0xF060;
+
+        [DllImport("user32.dll")]
+        public static extern int DeleteMenu(IntPtr hMenu, int nPosition, int wFlags);// 删除菜单
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);// 获取系统菜单句柄
+
+        [DllImport("kernel32.dll", ExactSpelling = true)]
+        private static extern IntPtr GetConsoleWindow();// 获取控制台窗口句柄
+
+
         public const string KEY_OutputFormat = "OutputFormat";
         public const string KEY_DataPath = "DataPath";
         public const string KEY_ConfigPath = "ConfigPath";
@@ -46,6 +60,9 @@ namespace DataReceiver
 
         static void Main(string[] args)
         {
+            // 禁用控制台的关闭按钮
+            DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_CLOSE, MF_BYCOMMAND);
+
             DRTickWriter TickWriter = new DRTickWriter(
                 ConfigurationManager.AppSettings[KEY_DataPath],
                 ConfigurationManager.AppSettings[KEY_OutputFormat]
@@ -113,6 +130,8 @@ namespace DataReceiver
 
             dataReceiver.WatcherStop();
             dataReceiver.Disconnect();
+            Console.WriteLine("按任意键退出");
+            Console.ReadKey();
 
             return;
         }

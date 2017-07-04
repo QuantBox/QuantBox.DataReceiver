@@ -148,9 +148,14 @@ namespace DataReceiver
         {
             if (null != KdbWriter)
             {
-                KdbWriter.SetTradingDay(TradingDay);
+                // 连接kdb
                 KdbWriter.Connect();
-                KdbWriter.Save(TradingDay);
+                // 设置当前交易日
+                KdbWriter.SetTradingDay(TradingDay);
+                // 初始化表
+                KdbWriter.Init();
+                // 检查是否换日了
+                KdbWriter.ChangeTradingDay();
             }
         }
 
@@ -172,7 +177,7 @@ namespace DataReceiver
 
         void _Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            lock(this)
+            lock (this)
             {
                 _Timer.Enabled = false;
 
@@ -208,7 +213,7 @@ namespace DataReceiver
                             break;
                         }
                     }
-                    catch(Exception e1)
+                    catch (Exception e1)
                     {
                         Log.Error(e1.Message);
                     }
@@ -318,6 +323,8 @@ namespace DataReceiver
             if (null == KdbWriter)
                 return;
 
+            // 这里写在后面是为了让行情先断开，等最后的数据插件入到数据库中后再保存
+            Log.Info("Disconnect 中主动进行保存");
             KdbWriter.Disconnect();
         }
 
@@ -327,7 +334,7 @@ namespace DataReceiver
         {
             if (null == KdbWriter)
                 return;
-
+            
             KdbWriter.Save(TradingDay);
         }
 
@@ -479,28 +486,34 @@ namespace DataReceiver
             KdbWriter.Write(ref pDepthMarketData);
         }
 
+
+        private DateTime LastTime = default(DateTime);
         protected override void OnConnectionStatus(object sender, ConnectionStatus status, ref RspUserLoginField userLogin, int size1)
         {
             base.OnConnectionStatus(sender, status, ref userLogin, size1);
 
-            // 由于配置中肯定会设置多个行情连接，所有
-            if (status == ConnectionStatus.Logined)
+            // 修改成只处理最后一个，因为一般情况下，最后一个其它事件也是最后到来
+            if(sender == XApiList.Last())
             {
-                TradingDay = userLogin.TradingDay;
-                SaveAsTradingDay();
+                // 由于配置中肯定会设置多个行情连接，所有
+                if (status == ConnectionStatus.Logined)
+                {
+                    TradingDay = userLogin.TradingDay;
+                    SaveAsTradingDay();
 
-                // 
-                if (null != KdbWriter)
-                {
-                    KdbWriter.SetTradingDay(TradingDay);
+                    if (null != KdbWriter)
+                    {
+                        KdbWriter.SetTradingDay(TradingDay);
+                    }
                 }
-            }
-            else if(status == ConnectionStatus.Disconnected)
-            {
-                // 断开连接，可加入一接断开连接时的保存指令，由于连接数多，可能会多次保存
-                if (null != KdbWriter)
+                else if (status == ConnectionStatus.Disconnected)
                 {
-                    KdbWriter.Save(TradingDay);
+                    // 断开连接，可加入一接断开连接时的保存指令，由于连接数多，5秒之内不重复保存
+                    if (null != KdbWriter)
+                    {
+                        Log.Info("OnConnectionStatus 中被动进行保存");
+                        KdbWriter.Save(TradingDay);
+                    }
                 }
             }
         }

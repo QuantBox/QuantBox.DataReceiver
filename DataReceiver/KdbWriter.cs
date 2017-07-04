@@ -30,12 +30,13 @@ namespace Tom.Kdb
             UsernameAndPassword = usernameAndPassword;
             Path = path;
             SaveQuote = bool.Parse(saveQuote);
+            TradingDay = 0;
+            // TradingDay = GetTradingDay(DateTime.Now);
         }
 
-        //private string TradingDay(DateTime datetime)
+        //private int GetTradingDay(DateTime datetime)
         //{
         //    DateTime dt;
-
         //    if (datetime.DayOfWeek == DayOfWeek.Friday && datetime.Hour > 16)
         //        dt = datetime.AddDays(3).Date;
         //    else if (datetime.DayOfWeek == DayOfWeek.Saturday)
@@ -45,14 +46,58 @@ namespace Tom.Kdb
         //    else
         //        dt = datetime.AddHours(8).Date;
 
-        //    return dt.ToString("yyyyMMdd");
+        //    return int.Parse(dt.ToString("yyyyMMdd"));
         //}
 
         public void SetTradingDay(int tradingday)
         {
-            // 这里是否希望换日后trade与quote中的数据保存后清空呢？
-            // Save(TradingDay);
+            // 由在连接Logined时，kdb还没有连接，所以不能做kdb的相关操作
             TradingDay = tradingday;
+        }
+
+        public void ChangeTradingDay()
+        {
+            // 换日后trade与quote中的数据保存后清空.
+            // 
+            int kdbTradingday = GetKdbTradingDay();
+            if (kdbTradingday != TradingDay && kdbTradingday != 0)
+            {
+                if (Save(kdbTradingday))
+                {
+                    Log.Info("换交易日了，重新建新表");
+                    Create();
+                }
+            }
+            // 登录后，订阅前，需要设置交易日，但是需要确保之前已经保存好了内存中的数据
+            if (!SetKdbTradingDay(TradingDay))
+                Log.Error("无法设置Kdb 的 tradingday，请检查是否无法连接q.exe 或 无法登录系统.");
+        }
+
+        public int GetKdbTradingDay()
+        {
+            if (KdbExists("tradingday"))
+            {
+                string checkStr = string.Format("tradingday");
+                int result = (int)((long)c.k(checkStr));
+                return result;
+            }
+            else return 0;
+        }
+
+        public bool SetKdbTradingDay(int tradingday)
+        {
+            try
+            {
+                string checkStr = string.Format("tradingday:{0}", tradingday);
+                var s = c.k(checkStr);
+                Log.Info("设置Kdb 的 tradingday 为 " + tradingday + " .");
+                //long result = (long)s;
+                return true;
+            }
+            catch
+            {
+            }
+            return false;
         }
 
         public void Connect()
@@ -88,6 +133,10 @@ namespace Tom.Kdb
                         CreateNoWindow = false,
                         Arguments = " -p " + Port.ToString()
                     });
+
+                    // 需要一点时间
+                    System.Threading.Thread.Sleep(2000);
+
                     if (string.IsNullOrEmpty(UsernameAndPassword))
                         c = new c(Host, Port);
                     else
@@ -101,7 +150,10 @@ namespace Tom.Kdb
             }
 
             Log.Info("连接 kdb+ 成功：{0}:{1}", Host, Port);
+        }
 
+        public void Init()
+        {
             // 表已经存在，不操作
             if (CheckTable())
             {
@@ -123,32 +175,45 @@ namespace Tom.Kdb
             else
             {
                 // 加载也是失败的，只能创建了
-                Init();
+                Create();
             }
         }
+
         public bool CheckTable()
         {
-            try
+            if (!KdbExists("trade"))
+                return false;
+            Log.Info("已经存在trade表.");
+            if (SaveQuote)
             {
-                short result1 = (short)c.k(@"type trade");
-                if (result1 != 98)
+                if (!KdbExists("quote"))
                     return false;
-                Log.Info("已经存在trade表.");
-                if (SaveQuote)
-                {
-                    short result2 = (short)c.k(@"type quote");
-                    if (result2 != 98)
-                        return false;
-                    Log.Info("已经存在quote表.");
-                }
-                return true;
+                Log.Info("已经存在quote表.");
             }
-            catch
+            return true;
+        }
+
+        private bool KdbExists(string text = "trade")
+        {
+            if (null == c)
             {
                 return false;
             }
+            try
+            {
+                string checkStr = string.Format("type {0}", text);
+                var result = c.k(checkStr);
+                short s = (short)result;
+                if (s == 98 || s == 99 || s == -7 || s == -11)
+                    return true;
+            }
+            catch
+            {
+            }
+            return false;
         }
-        public void Init()
+
+        public void Create()
         {
             lock (this)
             {
@@ -168,6 +233,7 @@ namespace Tom.Kdb
                 }
             }
         }
+
         public bool Load(int tradingday)
         {
             try
@@ -196,27 +262,15 @@ namespace Tom.Kdb
             }
             return true;
         }
-        public void Save(int tradingday)
+
+        public bool Save(int tradingday)
         {
-            // 比如没有登录成功，就收到断开消息，这里是会出现交易日为0
+            // 这里会被两处地方调用，一个是Disconnect，二是OnDisconnect
+            // 一个是主动发起，另一个是被动触发，担心OnDisconnect在有些API下不会触发，在退出时保存两次也无所谓
+
+            // 比如没有登录成功，就收到断开消息，这里是会出现交易日为0，这种情况下不保存
             if (tradingday == 0)
-                return;
-
-            //if (dt.DayOfWeek == DayOfWeek.Sunday)
-            //    return;
-
-            //if (dt.Hour > 16 & dt.Hour < 21) // 夜市开盘前 重连，可以保证 这个初始化
-            //{
-            //    // 检查 存档文件 的 最后存盘时间 如果 15:30 没有保存过，保存一次
-            //    string path = Path + @"/trades/" + TradingDay(dt.Date);
-            //    FileInfo fileInfo = new FileInfo(path);
-            //    if (fileInfo.LastWriteTime < dt.Date.AddHours(15).AddMinutes(30))
-            //    {
-            //        Save(dt.Date);
-            //    }
-
-            //    Init();
-            //}
+                return false;
 
             lock (this)
             {
@@ -231,13 +285,16 @@ namespace Tom.Kdb
                         c.k(string.Format(@"`:{0}/{1}/{2} set {3}", Path, "quotes", tradingday, "quote"));
                         Log.Info("保存 quote 表 {0} 完成.", tradingday);
                     }
+                    return true;
                 }
                 catch (Exception e)
                 {
                     Log.Error("保存trade/quote表失败.");
                 }
             }
+            return false;
         }
+
         public void Disconnect()
         {
             // 一定要保证退出时要运行
@@ -246,7 +303,7 @@ namespace Tom.Kdb
 
             lock (this)
             {
-                Save(TradingDay);
+                Save(GetKdbTradingDay());
                 c.Close();
                 c = null;
             }
