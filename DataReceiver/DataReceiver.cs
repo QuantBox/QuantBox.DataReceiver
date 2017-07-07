@@ -41,7 +41,8 @@ namespace DataReceiver
 
         private System.Timers.Timer _Timer = new System.Timers.Timer();
 
-        public ActionBlock<DepthMarketDataNClass> Input;
+        public ActionBlock<DepthMarketDataNClass> Input_pd0;
+        public ActionBlock<DepthMarketDataNClass> Input_kdb;
         private Logger Log = LogManager.GetCurrentClassLogger();
 
         #region 配置文件重新加载
@@ -226,7 +227,8 @@ namespace DataReceiver
 
         public DataReceiver()
         {
-            Input = new ActionBlock<DepthMarketDataNClass>((x) => OnInputMarketData(x));
+            Input_pd0 = new ActionBlock<DepthMarketDataNClass>((x) => OnInputMarketData_pd0(x));
+            Input_kdb = new ActionBlock<DepthMarketDataNClass>((x) => OnInputMarketData_kdb(x));
         }
 
         public void Save()
@@ -475,14 +477,20 @@ namespace DataReceiver
 
         private void OnRtnDepthMarketData(object sender, ref DepthMarketDataNClass marketData)
         {
-            Input.Post(marketData);
-        }
-
-        public void OnInputMarketData(DepthMarketDataNClass pDepthMarketData)
-        {
-            TickWriter.Write(ref pDepthMarketData);
+            Input_pd0.Post(marketData);
             if (null == KdbWriter)
                 return;
+
+            Input_kdb.Post(marketData);
+        }
+
+        public void OnInputMarketData_pd0(DepthMarketDataNClass pDepthMarketData)
+        {
+            TickWriter.Write(ref pDepthMarketData);
+        }
+
+        public void OnInputMarketData_kdb(DepthMarketDataNClass pDepthMarketData)
+        {
             KdbWriter.Write(ref pDepthMarketData);
         }
 
